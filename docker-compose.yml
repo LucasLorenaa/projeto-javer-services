@@ -1,0 +1,40 @@
+
+services:
+  storage:
+    build: ./app/storage
+    ports:
+      - "8001:8001"
+    environment:
+      - JDBC_URL=jdbc:h2:/srv/data/javer.db;AUTO_SERVER=TRUE
+      - JDBC_USER=sa
+      - JDBC_PASS=
+      - H2_JAR_PATH=/opt/h2/h2.jar
+    volumes:
+      - storage-data:/srv/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: app/gateway/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - STORAGE_BASE_URL=http://storage:8001
+    depends_on:
+      storage:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    restart: unless-stopped
+
+volumes:
+  storage-data:

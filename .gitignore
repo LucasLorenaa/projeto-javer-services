@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+htmlcov/
+.venv/
+.idea/
+*.swp
+*.log
+dist/
+build/
+*.egg-info/
+.coverage
+.pytest_cache/
+*.sqlite
