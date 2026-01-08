@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JAVER - Clientes</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <h1>JAVER Gateway - Gestão de Clientes</h1>
+    <p>Formulário simples consumindo o gateway em <code>/clients</code>.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Novo Cliente</h2>
+      <form id="client-form">
+        <div class="grid">
+          <label>
+            Nome
+            <input type="text" name="nome" required minlength="1" maxlength="255" />
+          </label>
+          <label>
+            Telefone
+            <input type="number" name="telefone" required min="0" step="1" />
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="correntista" /> Correntista
+          </label>
+          <label>
+            Score Crédito (opcional)
+            <input type="number" name="score_credito" min="0" step="0.01" />
+          </label>
+          <label>
+            Saldo CC (opcional)
+            <input type="number" name="saldo_cc" min="0" step="0.01" />
+          </label>
+        </div>
+        <div class="actions">
+          <button type="submit">Cadastrar</button>
+          <button type="reset" class="secondary">Limpar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="list-header">
+        <h2>Clientes</h2>
+        <button id="refresh" class="secondary">Atualizar</button>
+      </div>
+      <div class="table-wrap">
+        <table id="clients-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Telefone</th>
+              <th>Correntista</th>
+              <th>Score Crédito</th>
+              <th>Saldo CC</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- preenchido via JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <small>© JAVER Services</small>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

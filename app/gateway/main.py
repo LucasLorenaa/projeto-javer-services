@@ -1,4 +1,6 @@
 ﻿from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 import httpx
 from .models import ClientCreate, ClientUpdate, ClientOut, ScoreOut
 from . import client as client_module
@@ -9,6 +11,14 @@ def get_dynamic_http_client():
 
 
 app = FastAPI(title="JAVER Gateway Service", version="1.0.0")
+
+# Static frontend (served from gateway/static)
+app.mount("/static", StaticFiles(directory="gateway/static"), name="static")
+
+
+@app.get("/")
+def index():
+    return FileResponse("gateway/static/index.html")
 
 
 @app.get("/health")
