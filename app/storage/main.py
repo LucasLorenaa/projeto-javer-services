@@ -7,10 +7,10 @@ from storage.repository import list_clients, get_client, create_client, update_c
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Inicialização
     init_db()
     yield
-    # Shutdown (if needed)
+    # Finalização (se necessário)
 
 
 app = FastAPI(title="JAVER Storage Service", version="1.0.0", lifespan=lifespan)

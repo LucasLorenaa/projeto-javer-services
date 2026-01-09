@@ -14,7 +14,6 @@ def get_dynamic_http_client():
 
 app = FastAPI(title="JAVER Gateway Service", version="1.0.0")
 
-# Static frontend (served from gateway/static) - apenas se o diretório existir
 static_dir = Path(__file__).parent / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")

@@ -66,7 +66,7 @@ class FakeHTTPClient:
 
 
 def setup_function():
-    # inject fake client factory
+    # injetar factory de cliente fake
     fake = FakeHTTPClient()
     gw_client.get_http_client = lambda: fake
 
@@ -90,12 +90,12 @@ def test_gateway_crud_and_score():
     r = client.get(f"/clients/{cid}")
     assert r.status_code == 200
 
-    # score with no saldo -> score_calculado is None
+    # score sem saldo -> score_calculado é None
     r = client.get(f"/clients/{cid}/score")
     assert r.status_code == 200
     assert r.json()["score_calculado"] is None
 
-    # update client with saldo
+    # atualizar cliente com saldo
     r = client.put(f"/clients/{cid}", json={"saldo_cc": 500.0})
     assert r.status_code == 200
     assert r.json()["saldo_cc"] == 500.0

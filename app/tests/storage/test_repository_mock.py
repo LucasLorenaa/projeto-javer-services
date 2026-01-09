@@ -143,3 +143,89 @@ def test_delete_client_success():
             result = repository.delete_client(1)
     
     assert result is True
+
+
+def test_list_clients_without_cache():
+    """Testa list_clients quando conexão NÃO está no cache (should_close = True)"""
+    mock = create_mock_conn_with_data([("Test", 123, 1, None, None)])
+    # Remover do cache para testar o branch should_close = True
+    if hasattr(repository.get_connection, "_sqlite_cache"):
+        repository.get_connection._sqlite_cache = {}
+    
+    with patch("storage.repository.get_connection", return_value=mock):
+        result = repository.list_clients()
+        assert len(result) == 1
+        # Verificar que close() foi chamado
+        mock.close.assert_called_once()
+
+
+def test_get_client_without_cache():
+    """Testa get_client quando conexão NÃO está no cache"""
+    mock = create_mock_conn_with_data([("Test", 456, 0, 50.0, 100.0)])
+    if hasattr(repository.get_connection, "_sqlite_cache"):
+        repository.get_connection._sqlite_cache = {}
+    
+    with patch("storage.repository.get_connection", return_value=mock):
+        result = repository.get_client(1)
+        assert result is not None
+        mock.close.assert_called_once()
+
+
+def test_create_client_without_cache():
+    """Testa create_client quando conexão NÃO está no cache"""
+    mock = create_mock_conn_with_data()
+    if hasattr(repository.get_connection, "_sqlite_cache"):
+        repository.get_connection._sqlite_cache = {}
+    
+    call_count = [0]
+    def get_mock_sequence(*args, **kwargs):
+        call_count[0] += 1
+        if call_count[0] == 1:
+            return mock
+        else:
+            # Segunda chamada é de get_client dentro de create_client
+            return create_mock_conn_with_data([("New", 789, 1, None, None)])
+    
+    with patch("storage.repository.get_connection", side_effect=get_mock_sequence):
+        result = repository.create_client({"nome": "New", "telefone": 789, "correntista": True})
+        assert result is not None
+        # A primeira conexão deve ter sido fechada
+        assert mock.close.call_count >= 1
+
+
+def test_update_client_without_cache():
+    """Testa update_client quando conexão NÃO está no cache"""
+    if hasattr(repository.get_connection, "_sqlite_cache"):
+        repository.get_connection._sqlite_cache = {}
+    
+    mock1 = create_mock_conn_with_data([("Old", 111, 1, None, None)])
+    mock2 = create_mock_conn_with_data([("Old", 111, 1, None, None)])
+    mock3 = create_mock_conn_with_data([("Updated", 111, 1, None, None)])
+    
+    call_count = [0]
+    def get_mock_sequence(*args, **kwargs):
+        call_count[0] += 1
+        if call_count[0] == 1:
+            return mock1
+        elif call_count[0] == 2:
+            return mock2
+        else:
+            return mock3
+    
+    with patch("storage.repository.get_connection", side_effect=get_mock_sequence):
+        result = repository.update_client(1, {"nome": "Updated"})
+        assert result is not None
+        # Verificar que close foi chamado
+        assert mock2.close.call_count >= 1
+
+
+def test_delete_client_without_cache():
+    """Testa delete_client quando conexão NÃO está no cache"""
+    mock = create_mock_conn_with_data([("ToDelete", 999, 0, None, None)])
+    if hasattr(repository.get_connection, "_sqlite_cache"):
+        repository.get_connection._sqlite_cache = {}
+    
+    with patch("storage.repository.get_connection", return_value=mock):
+        result = repository.delete_client(1)
+        assert result is True
+        mock.close.assert_called_once()

@@ -11,3 +11,6 @@ build/
 .coverage
 .pytest_cache/
 *.sqlite
+coverage_*.txt
+test_report.txt
+final_coverage.txt

@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field
 
 class ClientBase(BaseModel):
     nome: str = Field(..., min_length=1, max_length=255)
-    # telefone as integer; allow non-negative values for tests/dev
     telefone: int = Field(..., ge=0)
     correntista: bool
     score_credito: Optional[float] = Field(default=None, ge=0)

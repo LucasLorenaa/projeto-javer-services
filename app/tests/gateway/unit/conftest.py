@@ -1,4 +1,3 @@
-
 # app/tests/gateway/unit/conftest.py
 import sys
 from pathlib import Path
@@ -8,12 +7,12 @@ root = Path(__file__).resolve().parents[3]   # .../JAVER-SERVICES
 app_dir = root / "app"
 sys.path.insert(0, str(app_dir))
 
-# Patch gateway.client at import time so tests that import gateway.main
-# (during collection) will see the fake client. This ensures no real HTTP
-# calls are attempted during collection or test execution.
+# Fazer patch de gateway.client no momento da importação para que testes que importam gateway.main
+# (durante a coleta) vejam o cliente fake. Isso garante que nenhuma chamada HTTP real
+# seja tentada durante a coleta ou execução de testes.
 try:
     import gateway.client as _gw_client
-    _gw_client.get_http_client = lambda: None  # placeholder; fixture will override
+    _gw_client.get_http_client = lambda: None  # placeholder; fixture irá sobrescrever
 except Exception:
     pass
 
@@ -72,11 +71,11 @@ class FakeResponse:
 @pytest.fixture(autouse=True)
 def patch_gateway_http_client(monkeypatch):
     from gateway import client as gw_client
-    # share a single FakeHTTPClient instance across requests so state (created clients)
-    # is preserved between calls during a test
+    # compartilhar uma única instância FakeHTTPClient entre requisições para que o estado (clientes criados)
+    # seja preservado entre chamadas durante um teste
     fake = FakeHTTPClient()
     monkeypatch.setattr(gw_client, "get_http_client", lambda: fake)
-    # also patch gateway.main's wrapper if it's been imported
+    # também fazer patch do wrapper de gateway.main se já foi importado
     try:
         from gateway import main as gw_main
         monkeypatch.setattr(gw_main, "get_dynamic_http_client", lambda: fake)

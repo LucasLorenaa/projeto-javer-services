@@ -15,7 +15,7 @@ def _row_to_client(row) -> Dict[str, Any]:
 
 def list_clients() -> List[Dict[str, Any]]:
     conn = get_connection()
-    # avoid closing cached sqlite connections (they are reused across tests)
+    # evitar fechar conexões sqlite em cache (são reutilizadas nos testes)
     should_close = True
     if hasattr(get_connection, "_sqlite_cache") and conn in get_connection._sqlite_cache.values():
         should_close = False
@@ -56,7 +56,7 @@ def create_client(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             "INSERT INTO clients (nome, telefone, correntista, score_credito, saldo_cc) VALUES (?, ?, ?, ?, ?)",
             (data["nome"], data["telefone"], data["correntista"], data.get("score_credito"), data.get("saldo_cc"))
         )
-        # Commit the insert, then get the generated id in a DB-agnostic way
+        # Fazer commit da inserção e obter o ID gerado de forma agnóstica ao banco
         conn.commit()
         cur.execute("SELECT MAX(id) FROM clients")
         row = cur.fetchone()
