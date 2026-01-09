@@ -2,6 +2,8 @@
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import httpx
+import os
+from pathlib import Path
 from .models import ClientCreate, ClientUpdate, ClientOut, ScoreOut
 from . import client as client_module
 
@@ -12,13 +14,18 @@ def get_dynamic_http_client():
 
 app = FastAPI(title="JAVER Gateway Service", version="1.0.0")
 
-# Static frontend (served from gateway/static)
-app.mount("/static", StaticFiles(directory="gateway/static"), name="static")
+# Static frontend (served from gateway/static) - apenas se o diretório existir
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 @app.get("/")
 def index():
-    return FileResponse("gateway/static/index.html")
+    static_file = Path(__file__).parent / "static" / "index.html"
+    if static_file.exists():
+        return FileResponse(str(static_file))
+    return {"message": "Frontend não disponível"}
 
 
 @app.get("/health")

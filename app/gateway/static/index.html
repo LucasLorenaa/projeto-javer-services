@@ -3,13 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JAVER - Clientes</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <title>JAVER SERVICES</title>
+  <link rel="stylesheet" href="/static/style.css?v=6" />
 </head>
 <body>
   <header>
-    <h1>JAVER Gateway - Gestão de Clientes</h1>
-    <p>Formulário simples consumindo o gateway em <code>/clients</code>.</p>
+    <h1>JAVER SERVICES</h1>
   </header>
 
   <main>
@@ -23,18 +22,14 @@
           </label>
           <label>
             Telefone
-            <input type="number" name="telefone" required min="0" step="1" />
+            <input type="tel" name="telefone" required pattern="[0-9]{11}" maxlength="11" placeholder="Por exemplo: 11999999999" />
+          </label>
+          <label>
+            Saldo CC
+            <input type="text" id="saldo_cc" name="saldo_cc" maxlength="12" placeholder="R$ 0,00" />
           </label>
           <label class="checkbox">
             <input type="checkbox" name="correntista" /> Correntista
-          </label>
-          <label>
-            Score Crédito (opcional)
-            <input type="number" name="score_credito" min="0" step="0.01" />
-          </label>
-          <label>
-            Saldo CC (opcional)
-            <input type="number" name="saldo_cc" min="0" step="0.01" />
           </label>
         </div>
         <div class="actions">
@@ -42,6 +37,11 @@
           <button type="reset" class="secondary">Limpar</button>
         </div>
       </form>
+    </section>
+
+    <section class="card">
+      <h2>Resposta da API</h2>
+      <pre id="api-response">-</pre>
     </section>
 
     <section class="card">
@@ -62,7 +62,7 @@
               <th>Ações</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="clients-tbody">
             <!-- preenchido via JS -->
           </tbody>
         </table>
@@ -74,6 +74,6 @@
     <small>© JAVER Services</small>
   </footer>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=11"></script>
 </body>
 </html>

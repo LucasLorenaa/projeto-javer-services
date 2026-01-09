@@ -30,28 +30,56 @@ const api = {
 function formToPayload(form) {
   const data = new FormData(form);
   const payload = Object.fromEntries(data.entries());
-  // Normaliza tipos
-  payload.telefone = payload.telefone ? Number(payload.telefone) : 0;
+  // Validar telefone (11 dígitos)
+  const telefone = payload.telefone.replace(/\D/g, '');
+  if (telefone.length !== 11) {
+    throw new Error('Telefone deve ter exatamente 11 dígitos');
+  }
+  payload.telefone = Number(telefone);
   payload.correntista = form.elements['correntista'].checked;
-  payload.score_credito = payload.score_credito ? Number(payload.score_credito) : null;
-  payload.saldo_cc = payload.saldo_cc ? Number(payload.saldo_cc) : null;
+  // Converter saldo formatado (R$ 1.234,56) para número
+  const saldoStr = payload.saldo_cc || '';
+  const saldoNumerico = saldoStr.replace(/[^\d,]/g, '').replace(',', '.');
+  payload.saldo_cc = saldoNumerico ? Number(saldoNumerico) : null;
+  // Score é calculado automaticamente no backend (saldo_cc * 0.1)
   return payload;
 }
 
+function formatCurrency(value) {
+  // Remove tudo exceto dígitos
+  let num = value.replace(/\D/g, '');
+  if (!num) return '';
+  // Converte para centavos e formata
+  num = (Number(num) / 100).toFixed(2);
+  // Formata com separadores brasileiros
+  num = num.replace('.', ',');
+  num = num.replace(/(\d)(\d{3})(,\d{2})$/, '$1.$2$3');
+  num = num.replace(/(\d)(\d{3}\.)/, '$1.$2');
+  return 'R$ ' + num;
+}
+
 function renderClients(rows) {
-  const tbody = document.querySelector('#clients-table tbody');
+  const tbody = document.querySelector('#clients-tbody');
   tbody.innerHTML = '';
+  if (rows.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td colspan="7" style="text-align:center;color:#999;">Nenhum cliente cadastrado</td>';
+    tbody.appendChild(tr);
+    return;
+  }
   for (const c of rows) {
     const tr = document.createElement('tr');
+    const saldoNum = c.saldo_cc != null ? Number(c.saldo_cc) : null;
+    const scoreCalc = saldoNum != null ? Math.floor(saldoNum * 0.1) : null;
+    const saldoFormatado = saldoNum != null ? `R$ ${saldoNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}` : '-';
     tr.innerHTML = `
       <td>${c.id}</td>
       <td>${c.nome}</td>
       <td>${c.telefone}</td>
       <td>${c.correntista ? 'Sim' : 'Não'}</td>
-      <td>${c.score_credito ?? '-'}</td>
-      <td>${c.saldo_cc ?? '-'}</td>
+      <td>${scoreCalc ?? '-'}</td>
+      <td>${saldoFormatado}</td>
       <td class="actions">
-        <button data-action="score" data-id="${c.id}">Score</button>
         <button data-action="delete" data-id="${c.id}" class="danger">Excluir</button>
       </td>
     `;
@@ -74,11 +102,13 @@ async function onSubmit(e) {
   const form = e.currentTarget;
   const payload = formToPayload(form);
   try {
-    await api.createClient(payload);
+    const res = await api.createClient(payload);
+    document.querySelector('#api-response').textContent = JSON.stringify(res, null, 2);
     form.reset();
     await refreshClients();
   } catch (err) {
     console.error(err);
+    document.querySelector('#api-response').textContent = `ERRO: ${err.message}`;
     alert(err.message);
   }
 }
@@ -94,9 +124,6 @@ async function onTableClick(e) {
         await api.deleteClient(id);
         await refreshClients();
       }
-    } else if (action === 'score') {
-      const s = await api.score(id);
-      alert(`Cliente: ${s.nome}\nSaldo CC: ${s.saldo_cc ?? '-'}\nScore calculado: ${s.score_calculado ?? '-'}`);
     }
   } catch (err) {
     console.error(err);
@@ -108,6 +135,13 @@ function init() {
   document.getElementById('client-form').addEventListener('submit', onSubmit);
   document.getElementById('refresh').addEventListener('click', refreshClients);
   document.querySelector('#clients-table').addEventListener('click', onTableClick);
+  
+  // Formatar saldo como moeda
+  const saldoInput = document.getElementById('saldo_cc');
+  saldoInput.addEventListener('input', (e) => {
+    e.target.value = formatCurrency(e.target.value);
+  });
+  
   refreshClients();
 }
 

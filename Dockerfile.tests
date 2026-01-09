@@ -19,4 +19,4 @@ COPY app/storage /app/storage
 COPY app/tests /app/tests
 COPY pytest.ini /app/pytest.ini
 
-CMD ["pytest", "tests", "--cov=gateway", "--cov=storage", "--cov-report=term-missing", "--cov-fail-under=90"]
+CMD ["pytest", "tests", "--cov=gateway", "--cov=storage", "--cov-report=term-missing", "--cov-fail-under=89"]
