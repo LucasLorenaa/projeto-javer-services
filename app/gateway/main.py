@@ -14,22 +14,22 @@ def get_dynamic_http_client():
 
 app = FastAPI(title="JAVER Gateway Service", version="1.0.0")
 
-static_dir = Path(__file__).parent / "static"
-if static_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+frontend_dir = Path(__file__).parent / "frontend"
+if frontend_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(frontend_dir)), name="static")
 
 
 @app.get("/")
 def index():
-    static_file = Path(__file__).parent / "static" / "index.html"
-    if static_file.exists():
-        return FileResponse(str(static_file))
+    frontend_file = Path(__file__).parent / "frontend" / "index.html"
+    if frontend_file.exists():
+        return FileResponse(str(frontend_file))
     return {"message": "Frontend não disponível"}
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "storage"}
+    return {"status": "ok", "service": "gateway"}
 
 
 @app.get("/clients", response_model=list[ClientOut])
