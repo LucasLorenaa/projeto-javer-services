@@ -1,6 +1,9 @@
 __pycache__/
 *.py[cod]
+*.pyc
 htmlcov/
+cov_report/
+current_coverage.html
 .venv/
 .idea/
 *.swp
@@ -9,6 +12,7 @@ dist/
 build/
 *.egg-info/
 .coverage
+.coverage.*
 .pytest_cache/
 *.sqlite
 coverage_*.txt

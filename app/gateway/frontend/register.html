@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JAVER - Criar Conta</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-back {
+            background: #f0f0f0;
+            color: #667eea;
+        }
+
+        .btn-back:hover {
+            background: #e0e0e0;
+        }
+
+        .error-msg {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-msg {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper input {
+            padding-right: 40px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            width: auto;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-password svg {
+            width: 20px;
+            height: 20px;
+            fill: #667eea;
+            transition: fill 0.3s;
+        }
+
+        .toggle-password:hover svg {
+            fill: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>JAVER</h1>
+            <p>Criar Conta</p>
+        </div>
+
+        <div class="content">
+            <div class="error-msg" id="errorMsg"></div>
+            <div class="success-msg" id="successMsg"></div>
+
+            <form id="registerForm">
+                <h2>Preencha seus dados</h2>
+
+                <div class="form-group">
+                    <label for="nome">Nome</label>
+                    <input type="text" id="nome" name="nome" required minlength="1" maxlength="255" placeholder="Seu nome completo" />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" name="email" required placeholder="seu@email.com" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefone">Telefone</label>
+                        <input type="tel" id="telefone" name="telefone" required pattern="[0-9]{11}" maxlength="11" placeholder="11999999999" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="dataNascimento">Data de Nascimento</label>
+                    <input type="date" id="dataNascimento" name="dataNascimento" required />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="senha">Senha</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="senha" name="senha" required minlength="6" maxlength="20" placeholder="Mín. 6, máx. 20 caracteres" />
+                            <button type="button" class="toggle-password" onclick="togglePassword('senha', this)">
+                                <svg viewBox="0 0 576 512" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.6 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.6-108.3C406.8 109.6 353.2 80 288 80zM95.4 112.6C142.5 68.8 207.2 32 288 32s145.5 36.8 192.6 80.6c46.8 43.5 78.1 95.4 93 131.1c3.3 7.9 3.3 16.7 0 24.6c-14.9 35.7-46.2 87.7-93 131.1C433.5 443.2 368.8 480 288 480s-145.5-36.8-192.6-80.6C48.6 355.9 17.3 303.9 2.4 268.3c-3.3-7.9-3.3-16.7 0-24.6C17.3 208.1 48.6 156.1 95.4 112.6zM288 336c26.5 0 48-21.5 48-48s-21.5-48-48-48c-26.5 0-48 21.5-48 48s21.5 48 48 48zm0-144c53 0 96 43 96 96s-43 96-96 96s-96-43-96-96s43-96 96-96z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmarSenha">Confirmar Senha</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="confirmarSenha" name="confirmarSenha" required minlength="6" maxlength="20" placeholder="Repita a senha" />
+                            <button type="button" class="toggle-password" onclick="togglePassword('confirmarSenha', this)">
+                                <svg viewBox="0 0 576 512" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.6 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.6-108.3C406.8 109.6 353.2 80 288 80zM95.4 112.6C142.5 68.8 207.2 32 288 32s145.5 36.8 192.6 80.6c46.8 43.5 78.1 95.4 93 131.1c3.3 7.9 3.3 16.7 0 24.6c-14.9 35.7-46.2 87.7-93 131.1C433.5 443.2 368.8 480 288 480s-145.5-36.8-192.6-80.6C48.6 355.9 17.3 303.9 2.4 268.3c-3.3-7.9-3.3-16.7 0-24.6C17.3 208.1 48.6 156.1 95.4 112.6zM288 336c26.5 0 48-21.5 48-48s-21.5-48-48-48c-26.5 0-48 21.5-48 48s21.5 48 48 48zm0-144c53 0 96 43 96 96s-43 96-96 96s-96-43-96-96s43-96 96-96z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group full" id="senhaHints" style="font-size:12px; color:#555; line-height:1.5;">
+                        Mínimo 6 caracteres. Recomendado: maiúscula, minúscula, número e símbolo.
+                        <div id="pwdStrength" style="height:8px; background:#eee; border-radius:4px; margin-top:8px;">
+                            <div id="pwdBar" style="height:8px; width:0%; background:#e74c3c; border-radius:4px;"></div>
+                        </div>
+                        <div id="pwnedMsg" style="margin-top:6px; color:#c33; display:none;">⚠️ Senha comprometida em vazamentos. Escolha outra.</div>
+                    </div>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="correntista" name="correntista" />
+                    <label for="correntista">Desejo me tornar correntista</label>
+                </div>
+
+                <button type="submit" class="btn-submit">Criar Conta</button>
+                <button type="button" class="btn-back" id="backBtn">Voltar ao Login</button>
+            </form>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 JAVER. Todos os direitos reservados.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jssha@3.2.0/dist/sha.js"></script>
+    <script>
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const svg = button.querySelector('svg');
+            if (input.type === 'password') {
+                input.type = 'text';
+                svg.innerHTML = '<path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c8.4-19.3 10.6-41.4 4.8-63.3c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zM373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5L373 389.9z"/>';
+            } else {
+                input.type = 'password';
+                svg.innerHTML = '<path d="M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.6 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.6-108.3C406.8 109.6 353.2 80 288 80zM95.4 112.6C142.5 68.8 207.2 32 288 32s145.5 36.8 192.6 80.6c46.8 43.5 78.1 95.4 93 131.1c3.3 7.9 3.3 16.7 0 24.6c-14.9 35.7-46.2 87.7-93 131.1C433.5 443.2 368.8 480 288 480s-145.5-36.8-192.6-80.6C48.6 355.9 17.3 303.9 2.4 268.3c-3.3-7.9-3.3-16.7 0-24.6C17.3 208.1 48.6 156.1 95.4 112.6zM288 336c26.5 0 48-21.5 48-48s-21.5-48-48-48c-26.5 0-48 21.5-48 48s21.5 48 48 48zm0-144c53 0 96 43 96 96s-43 96-96 96s-96-43-96-96s43-96 96-96z"/>';
+            }
+        }
+
+        const registerForm = document.getElementById('registerForm');
+        const backBtn = document.getElementById('backBtn');
+        const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+        const senhaInput = document.getElementById('senha');
+        const confirmarInput = document.getElementById('confirmarSenha');
+        const pwdBar = document.getElementById('pwdBar');
+        const pwnedMsg = document.getElementById('pwnedMsg');
+
+        let hibpTimer = null;
+        function calcStrength(pwd){
+            let score = 0;
+            if(pwd.length >= 6) score++;
+            if(pwd.length >= 10) score++;
+            if(/[a-z]/.test(pwd)) score++;
+            if(/[A-Z]/.test(pwd)) score++;
+            if(/\d/.test(pwd)) score++;
+            if(/[^A-Za-z0-9]/.test(pwd)) score++;
+            return score; // 0..6
+        }
+        function renderStrength(score){
+            const percent = (score/6)*100;
+            pwdBar.style.width = percent+"%";
+            pwdBar.style.background = score>=5 ? '#27ae60' : score>=3 ? '#f1c40f' : '#e74c3c';
+        }
+        async function checkPwned(pwd){
+            pwnedMsg.style.display = 'none';
+            if(pwd.length < 6) return;
+            // k-anonymity HIBP
+            const sha1 = new jsSHA('SHA-1', 'TEXT');
+            sha1.update(pwd);
+            const hash = sha1.getHash('HEX').toUpperCase();
+            const prefix = hash.substring(0,5);
+            const suffix = hash.substring(5);
+            try{
+                const resp = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+                const text = await resp.text();
+                const compromised = text.split('\n').some(line => line.split(':')[0].trim().toUpperCase() === suffix);
+                if(compromised){
+                    pwnedMsg.style.display = 'block';
+                }
+            }catch{ /* ignore network errors */ }
+        }
+        senhaInput.addEventListener('input', () => {
+            const pwd = senhaInput.value;
+            renderStrength(calcStrength(pwd));
+            clearTimeout(hibpTimer);
+            hibpTimer = setTimeout(()=>checkPwned(pwd), 600);
+        });
+        confirmarInput.addEventListener('input', () => {
+            if(confirmarInput.value !== senhaInput.value){
+                confirmarInput.setCustomValidity('As senhas não conferem');
+            }else{
+                confirmarInput.setCustomValidity('');
+            }
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+            const telefone = parseInt(document.getElementById('telefone').value);
+            const dataNascimento = document.getElementById('dataNascimento').value;
+            const senha = document.getElementById('senha').value;
+            const confirmarSenha = document.getElementById('confirmarSenha').value;
+            const correntista = document.getElementById('correntista').checked;
+
+            // Validar idade mínima (18 anos) com parse seguro ISO (YYYY-MM-DD)
+            function parseISODate(str) {
+                const [y, m, d] = str.split('-').map(Number);
+                return new Date(y, (m || 1) - 1, d || 1);
+            }
+            const dataNasc = parseISODate(dataNascimento);
+            const hoje = new Date();
+            let idade = hoje.getFullYear() - dataNasc.getFullYear();
+            const mesAtual = hoje.getMonth();
+            const mesNasc = dataNasc.getMonth();
+            if (mesAtual < mesNasc || (mesAtual === mesNasc && hoje.getDate() < dataNasc.getDate())) {
+                idade--;
+            }
+
+            if (idade < 18) {
+                errorMsg.textContent = 'Você precisa ter pelo menos 18 anos';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            if (senha !== confirmarSenha) {
+                errorMsg.textContent = 'As senhas não conferem';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            if (senha.length < 6) {
+                errorMsg.textContent = 'A senha deve ter no mínimo 6 caracteres';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            if (senha.length > 20) {
+                errorMsg.textContent = 'A senha deve ter no máximo 20 caracteres';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nome,
+                        email,
+                        telefone,
+                        data_nascimento: dataNascimento,
+                        senha,
+                        correntista
+                    })
+                });
+
+                if (response.ok) {
+                    const cliente = await response.json();
+                    successMsg.textContent = 'Conta criada com sucesso! Redirecionando para login...';
+                    successMsg.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else if (response.status === 400) {
+                    const error = await response.json();
+                    errorMsg.textContent = error.detail || 'Erro ao criar conta';
+                    errorMsg.style.display = 'block';
+                } else {
+                    const error = await response.json();
+                    errorMsg.textContent = error.detail || 'Erro ao criar conta';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Erro de conexão com o servidor';
+                errorMsg.style.display = 'block';
+            }
+        });
+
+        backBtn.addEventListener('click', () => {
+            window.location.href = '/login';
+        });
+    </script>
+</body>
+</html>

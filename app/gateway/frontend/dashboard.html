@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Javer Services</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .header p {
+            color: #666;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.3s;
+            position: absolute;
+            right: 30px;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                position: relative;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+            .edit-btn-top {
+                position: absolute;
+                top: 30px;
+                right: 30px;
+                padding: 8px 16px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 14px;
+                transition: all 0.3s;
+            }
+
+            .edit-btn-top:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            }
+
+        .balance-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .balance-value {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .score-display {
+            background: linear-gradient(135deg, #12c2e9 0%, #c471f5 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .score-value {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .score-description {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+            white-space: pre-line;
+        }
+
+        .message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .logout-btn {
+                align-self: flex-end;
+                margin-top: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🏦 Dashboard - Javer Services</h1>
+                <p id="userGreeting">Bem-vindo!</p>
+            </div>
+            <button class="logout-btn" onclick="logout()">🚪 Sair</button>
+        </div>
+
+        <div class="content">
+            <!-- Seção de Saldo -->
+            <div class="card">
+                <h2>💰 Saldo Atual</h2>
+                <div class="message" id="message"></div>
+                
+                <div class="balance-display">
+                    <div class="balance-label">Saldo Disponível</div>
+                    <div class="balance-value" id="balanceValue">R$ 0,00</div>
+                </div>
+
+                <form onsubmit="updateBalance(event)">
+                    <div class="form-group">
+                        <label for="newBalance">Adicionar Saldo (R$)</label>
+                        <input type="text" id="newBalance" placeholder="R$ 0,00" maxlength="12" required>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">💳 Atualizar Saldo</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Seção de Score -->
+            <div class="card">
+                <h2>📊 Score de Crédito</h2>
+                
+                <div class="score-display">
+                    <div class="score-label">Score Calculado</div>
+                    <div class="score-value" id="scoreValue">0,00</div>
+                    <div class="score-description">
+                        Baseado em 10% do saldo<br>
+                        <small>Atualiza automaticamente</small>
+                    </div>
+                </div>
+
+                <div class="info-grid" style="margin-top: 20px;">
+                    <div class="info-item">
+                        <div class="info-label">Categoria</div>
+                        <div class="info-value" id="scoreCategory">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção de Dados Pessoais -->
+            <div class="card">
+                <h2>👤 Dados Pessoais</h2>
+                    <button class="edit-btn-top" id="editBtn" onclick="enableEditMode()">✏️ Editar</button>
+                
+                <!-- Modo Visualização -->
+                <div id="viewMode">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Nome</div>
+                            <div class="info-value" id="userName">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Email</div>
+                            <div class="info-value" id="userEmail">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Telefone</div>
+                            <div class="info-value" id="userPhone">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Data de Nascimento</div>
+                            <div class="info-value" id="userBirthDate">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">ID Cliente</div>
+                            <div class="info-value" id="userID">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Correntista</div>
+                            <div class="info-value" id="userStatus">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modo Edição -->
+                <div id="editMode" style="display: none;">
+                    <form onsubmit="savePersonalData(event)">
+                        <div class="form-group">
+                            <label for="editName">Nome</label>
+                            <input type="text" id="editName" required minlength="1" maxlength="255">
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmail">Email</label>
+                            <input type="email" id="editEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPhone">Telefone</label>
+                            <input type="tel" id="editPhone" required inputmode="numeric" pattern="[0-9]*" maxlength="11">
+                        </div>
+                        <div class="form-group">
+                            <label for="editBirthDate">Data de Nascimento</label>
+                            <input type="date" id="editBirthDate" required>
+                        </div>
+                        <div class="button-group">
+                            <button type="submit" class="btn-primary">💾 Salvar</button>
+                            <button type="button" class="btn-secondary" onclick="cancelEdit()">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Seção de Resposta da API -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>🔍 Resposta da API</h2>
+                <pre id="apiResponse" style="background: #f8f9fa; padding: 15px; border-radius: 8px; overflow: auto; max-height: 300px; font-size: 12px; color: #333;"></pre>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function init() {
+            // Recupera dados do usuário do localStorage
+            const userData = localStorage.getItem('cliente');
+            
+            if (!userData) {
+                window.location.href = '/login';
+                return;
+            }
+
+            currentUser = JSON.parse(userData);
+            displayUserData();
+            setupBalanceInput();
+        }
+
+        function setupBalanceInput() {
+            const input = document.getElementById('newBalance');
+            input.addEventListener('input', formatCurrency);
+        }
+
+        function formatCurrency(event) {
+            let value = event.target.value.replace(/\D/g, '');
+            
+            if (value.length > 10) {
+                value = value.slice(0, 10);
+            }
+            
+            if (value.length === 0) {
+                event.target.value = '';
+                return;
+            }
+            
+            // Garantir pelo menos 3 dígitos (para centavos)
+            value = value.padStart(3, '0');
+            
+            // Separar inteiros e centavos
+            const centavos = value.slice(-2);
+            let inteiros = value.slice(0, -2);
+            
+            // Remover zeros desnecessários da frente
+            inteiros = inteiros.replace(/^0+/, '') || '0';
+            
+            // Formatar inteiros com separador de milhares
+            const inteirosFormatados = inteiros.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            
+            event.target.value = `R$ ${inteirosFormatados},${centavos}`;
+        }
+
+        function displayUserData() {
+            if (!currentUser) return;
+
+            // Exibir resposta completa da API
+            document.getElementById('apiResponse').textContent = JSON.stringify(currentUser, null, 2);
+
+            // Nome
+            document.getElementById('userGreeting').textContent = `Bem-vindo, ${currentUser.nome}!`;
+            document.getElementById('userName').textContent = currentUser.nome;
+            document.getElementById('userEmail').textContent = currentUser.email || 'N/A';
+            document.getElementById('userPhone').textContent = currentUser.telefone || 'N/A';
+            function formatISOToPtBr(str){
+                if(!str) return 'N/A';
+                const [y,m,d]=str.split('-');
+                if(!y||!m||!d) return str;
+                return `${d.padStart(2,'0')}/${m.padStart(2,'0')}/${y}`;
+            }
+            document.getElementById('userBirthDate').textContent = formatISOToPtBr(currentUser.data_nascimento);
+            document.getElementById('userID').textContent = `#${currentUser.id}`;
+            document.getElementById('userStatus').textContent = currentUser.correntista ? '✅ Sim' : '❌ Não';
+
+            // Saldo e Score
+            updateBalanceDisplay();
+        }
+
+        function updateBalanceDisplay() {
+            const balance = parseFloat(currentUser.saldo_cc || 0);
+            const score = balance * 0.1;
+
+            // Atualizar score_credito no objeto currentUser
+            currentUser.score_credito = Math.floor(score);
+
+            // Atualizar resposta da API
+            document.getElementById('apiResponse').textContent = JSON.stringify(currentUser, null, 2);
+
+            // Exibir saldo
+            document.getElementById('balanceValue').textContent = `R$ ${balance.toFixed(2)}`;
+            
+            // Exibir score (sem decimais)
+            document.getElementById('scoreValue').textContent = Math.floor(score);
+
+            // Categoria do score
+            let category = '';
+            if (score >= 1000) {
+                category = '⭐ Platina';
+            } else if (score >= 500) {
+                category = '🥇 Ouro';
+            } else if (score >= 200) {
+                category = '🥈 Prata';
+            } else if (score > 0) {
+                category = '🥉 Bronze';
+            } else {
+                category = '❌ Sem Score';
+            }
+
+            document.getElementById('scoreCategory').textContent = category;
+        }
+
+        async function updateBalance(event) {
+            event.preventDefault();
+            const inputValue = document.getElementById('newBalance').value.replace(/\D/g, '');
+            const newBalance = parseFloat(inputValue) / 100;
+
+            if (newBalance < 0 || isNaN(newBalance)) {
+                showMessage('❌ O saldo não pode ser negativo', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/clients/${currentUser.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        saldo_cc: newBalance
+                    })
+                });
+
+                if (response.ok) {
+                    currentUser = await response.json();
+                    localStorage.setItem('cliente', JSON.stringify(currentUser));
+                    updateBalanceDisplay();
+                    showMessage('✅ Saldo atualizado com sucesso!', 'success');
+                    document.getElementById('newBalance').value = '';
+                } else {
+                    const error = await response.json();
+                    showMessage(`❌ Erro: ${error.detail || 'Falha ao atualizar saldo'}`, 'error');
+                }
+            } catch (err) {
+                showMessage(`❌ Erro: ${err.message}`, 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            const msgElement = document.getElementById('message');
+            msgElement.textContent = message;
+            msgElement.className = `message ${type}`;
+            
+            setTimeout(() => {
+                msgElement.className = 'message';
+            }, 5000);
+        }
+
+        function sanitizePhone(value) {
+            return (value || '').replace(/\D/g, '').slice(0, 11);
+        }
+
+        const phoneInput = document.getElementById('editPhone');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', () => {
+                phoneInput.value = sanitizePhone(phoneInput.value);
+            });
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+
+        function enableEditMode() {
+            // Preencher campos de edição com dados atuais
+                document.getElementById('editBtn').style.display = 'none';
+            document.getElementById('editName').value = currentUser.nome;
+            document.getElementById('editEmail').value = currentUser.email;
+            document.getElementById('editPhone').value = sanitizePhone(currentUser.telefone?.toString());
+            document.getElementById('editBirthDate').value = currentUser.data_nascimento || '';
+
+            // Alternar modos
+            document.getElementById('viewMode').style.display = 'none';
+            document.getElementById('editMode').style.display = 'block';
+        }
+
+        function cancelEdit() {
+            // Alternar de volta para modo visualização
+                document.getElementById('editBtn').style.display = 'block';
+            document.getElementById('editMode').style.display = 'none';
+            document.getElementById('viewMode').style.display = 'block';
+        }
+
+        async function savePersonalData(event) {
+            event.preventDefault();
+
+            // Capturar dados antigos para comparação
+            const oldEmail = currentUser.email;
+            const oldPhone = currentUser.telefone;
+
+            const phoneClean = sanitizePhone(document.getElementById('editPhone').value);
+
+            const updatedData = {
+                nome: document.getElementById('editName').value,
+                email: document.getElementById('editEmail').value,
+                telefone: phoneClean ? parseInt(phoneClean, 10) : null,
+                data_nascimento: document.getElementById('editBirthDate').value
+            };
+
+            try {
+                const response = await fetch(`/clients/${currentUser.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedData)
+                });
+
+                if (response.ok) {
+                    currentUser = await response.json();
+                    localStorage.setItem('cliente', JSON.stringify(currentUser));
+                        document.getElementById('editBtn').style.display = 'block';
+                    displayUserData();
+                    cancelEdit();
+                    
+                    // Mensagem personalizada se email ou telefone mudaram
+                    let message = '✅ Dados atualizados com sucesso!';
+                    const emailChanged = oldEmail !== currentUser.email;
+                    const phoneChanged = oldPhone !== currentUser.telefone;
+                    
+                    if (emailChanged && phoneChanged) {
+                        message += '\n📧 Email e 📱 Telefone alterados. Use o novo email no próximo login!';
+                    } else if (emailChanged) {
+                        message += '\n📧 Email alterado. Use o novo email no próximo login!';
+                    } else if (phoneChanged) {
+                        message += '\n📱 Telefone alterado e registrado com sucesso!';
+                    }
+                    
+                    showMessage(message, 'success');
+                } else {
+                    const error = await response.json();
+                    showMessage(`❌ Erro: ${error.detail || 'Falha ao atualizar dados'}`, 'error');
+                }
+            } catch (err) {
+                showMessage(`❌ Erro: ${err.message}`, 'error');
+            }
+        }
+
+        // Inicializa ao carregar
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

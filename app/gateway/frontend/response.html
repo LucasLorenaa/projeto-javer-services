@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resposta da API - Javer Services</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .response-section {
+            margin-bottom: 25px;
+        }
+
+        .response-section h2 {
+            font-size: 16px;
+            color: #667eea;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .response-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .response-box pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .user-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .clients-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .client-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            font-size: 13px;
+        }
+
+        .client-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .client-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .client-detail {
+            color: #666;
+            font-size: 12px;
+            margin: 3px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Javer Services</h1>
+            <p id="title">Carregando...</p>
+            <div id="status" class="status"></div>
+        </div>
+
+        <div id="successMessage" class="success-message" style="display: none;"></div>
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Carregando dados...</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <!-- Seção de dados do usuário -->
+            <div id="userSection" class="response-section" style="display: none;">
+                <h2>👤 Dados do Usuário</h2>
+                <div class="user-info" id="userInfo"></div>
+            </div>
+
+            <!-- Seção de clientes (para listar clientes) -->
+            <div id="clientsSection" class="response-section" style="display: none;">
+                <h2>📋 Lista de Clientes</h2>
+                <div class="clients-list" id="clientsList"></div>
+            </div>
+
+            <!-- Seção de resposta bruta da API -->
+            <div class="response-section">
+                <h2>📡 Resposta da API (JSON)</h2>
+                <div class="response-box">
+                    <pre id="responseJson"></pre>
+                </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="actions">
+                <button class="btn-primary" onclick="listClients()">📊 Ver Clientes</button>
+                <button class="btn-secondary" onclick="logout()">🚪 Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Recupera os dados armazenados
+        let currentData = null;
+        let isUserResponse = false;
+
+        function init() {
+            const params = new URLSearchParams(window.location.search);
+            const type = params.get('type') || 'login';
+            
+            // Recupera dados do localStorage
+            const storedData = localStorage.getItem(type + '_response');
+            
+            if (storedData) {
+                try {
+                    currentData = JSON.parse(storedData);
+                    isUserResponse = type === 'login' || type === 'register';
+                    
+                    document.getElementById('title').textContent = 
+                        type === 'login' ? '✅ Login Realizado com Sucesso!' : 
+                        type === 'register' ? '✅ Cadastro Realizado com Sucesso!' :
+                        '📋 Lista de Clientes';
+                    
+                    document.getElementById('status').textContent = 'Sucesso';
+                    document.getElementById('status').className = 'status success';
+                    document.getElementById('successMessage').textContent = 
+                        type === 'login' ? 'Você foi autenticado com sucesso!' :
+                        type === 'register' ? 'Sua conta foi criada com sucesso!' :
+                        'Dados carregados com sucesso!';
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    displayResponse(type);
+                } catch (e) {
+                    showError('Erro ao carregar dados: ' + e.message);
+                }
+            } else {
+                showError('Nenhum dado disponível. Por favor, faça login ou registre-se.');
+            }
+        }
+
+        function displayResponse(type) {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            
+            // Exibe resposta JSON
+            document.getElementById('responseJson').textContent = 
+                JSON.stringify(currentData, null, 2);
+            
+            // Se for resposta de usuário, exibe os dados formatados
+            if (isUserResponse && currentData.id) {
+                displayUserInfo(currentData);
+            }
+        }
+
+        function displayUserInfo(user) {
+            const userSection = document.getElementById('userSection');
+            const userInfo = document.getElementById('userInfo');
+            
+            userSection.style.display = 'block';
+            
+            const fields = [
+                { label: 'ID', value: user.id },
+                { label: 'Nome', value: user.nome },
+                { label: 'Email', value: user.email },
+                { label: 'Telefone', value: user.telefone },
+                { label: 'Idade', value: user.idade || 'N/A' },
+                { label: 'Correntista', value: user.correntista ? 'Sim' : 'Não' },
+                { label: 'Score', value: user.score_credito || 'N/A' },
+                { label: 'Saldo CC', value: user.saldo_cc ? `R$ ${parseFloat(user.saldo_cc).toFixed(2)}` : 'N/A' }
+            ];
+            
+            userInfo.innerHTML = fields.map(f => `
+                <div class="info-item">
+                    <div class="info-label">${f.label}</div>
+                    <div class="info-value">${f.value}</div>
+                </div>
+            `).join('');
+        }
+
+        function listClients() {
+            // Faz requisição para listar clientes
+            fetch('/clients')
+                .then(r => r.json())
+                .then(data => {
+                    currentData = data;
+                    displayClientsList(data);
+                    document.getElementById('responseJson').textContent = 
+                        JSON.stringify(data, null, 2);
+                    document.getElementById('title').textContent = '📋 Lista de Clientes';
+                    document.getElementById('userSection').style.display = 'none';
+                    document.getElementById('clientsSection').style.display = 'block';
+                })
+                .catch(err => showError('Erro ao carregar clientes: ' + err.message));
+        }
+
+        function displayClientsList(clients) {
+            const clientsList = document.getElementById('clientsList');
+            
+            if (!Array.isArray(clients) || clients.length === 0) {
+                clientsList.innerHTML = '<p style="color: #666; text-align: center;">Nenhum cliente encontrado.</p>';
+                return;
+            }
+            
+            clientsList.innerHTML = clients.map(client => `
+                <div class="client-item">
+                    <div class="client-name">👤 ${client.nome}</div>
+                    <div class="client-detail"><strong>ID:</strong> ${client.id}</div>
+                    <div class="client-detail"><strong>Email:</strong> ${client.email || 'N/A'}</div>
+                    <div class="client-detail"><strong>Telefone:</strong> ${client.telefone || 'N/A'}</div>
+                    <div class="client-detail"><strong>Idade:</strong> ${client.idade || 'N/A'}</div>
+                    <div class="client-detail"><strong>Saldo:</strong> R$ ${parseFloat(client.saldo_cc || 0).toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('status').textContent = 'Erro';
+            document.getElementById('status').className = 'status error';
+            document.getElementById('title').textContent = '❌ Erro ao Carregar Dados';
+        }
+
+        // Inicializa ao carregar a página
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

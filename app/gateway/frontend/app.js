@@ -30,6 +30,12 @@ const api = {
 function formToPayload(form) {
   const data = new FormData(form);
   const payload = Object.fromEntries(data.entries());
+  // Validação idade
+  const idadeNum = Number(payload.idade || 0);
+  if (!Number.isInteger(idadeNum) || idadeNum < 18) {
+    throw new Error('Idade deve ser um número inteiro maior ou igual a 18');
+  }
+  payload.idade = idadeNum;
   // Validar telefone (11 dígitos)
   const telefone = payload.telefone.replace(/\D/g, '');
   if (telefone.length !== 11) {
@@ -76,6 +82,8 @@ function renderClients(rows) {
       <td>${c.id}</td>
       <td>${c.nome}</td>
       <td>${c.telefone}</td>
+      <td>${c.email || '-'}</td>
+      <td>${c.idade ?? '-'}</td>
       <td>${c.correntista ? 'Sim' : 'Não'}</td>
       <td>${scoreCalc ?? '-'}</td>
       <td>${saldoFormatado}</td>

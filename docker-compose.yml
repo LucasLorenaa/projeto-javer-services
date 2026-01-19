@@ -1,16 +1,35 @@
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=javer_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   storage:
     build: ./app/storage
     ports:
       - "8001:8001"
     environment:
-      - JDBC_URL=jdbc:h2:/srv/data/javer.db;AUTO_SERVER=TRUE
-      - JDBC_USER=sa
-      - JDBC_PASS=
-      - H2_JAR_PATH=/opt/h2/h2.jar
-    volumes:
-      - storage-data:/srv/data
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=javer_db
+      - DB_USER=postgres
+      - DB_PASS=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8001/health"]
       interval: 10s
@@ -29,6 +48,8 @@ services:
     depends_on:
       storage:
         condition: service_healthy
+    labels:
+      - "com.docker.compose.service.web-url=http://localhost:8000"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
       interval: 10s
@@ -37,4 +58,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  storage-data:
+  postgres-data:

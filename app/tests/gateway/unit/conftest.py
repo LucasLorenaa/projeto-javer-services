@@ -12,7 +12,8 @@ sys.path.insert(0, str(app_dir))
 # seja tentada durante a coleta ou execução de testes.
 try:
     import gateway.client as _gw_client
-    _gw_client.get_http_client = lambda: None  # placeholder; fixture irá sobrescrever
+    import httpx
+    _gw_client.get_http_client = lambda: httpx.Client()
 except Exception:
     pass
 
@@ -35,7 +36,7 @@ class FakeHTTPClient:
         if path == "/clients":
             cid = self.next_id
             self.next_id += 1
-            obj = {"id": cid, **json}
+            obj = {"id": cid, **{"telefone": 123456789, "correntista": True}, **json}
             self.db[cid] = obj
             return FakeResponse(obj, 201)
         return FakeResponse({}, 404)
@@ -75,10 +76,10 @@ def patch_gateway_http_client(monkeypatch):
     # seja preservado entre chamadas durante um teste
     fake = FakeHTTPClient()
     monkeypatch.setattr(gw_client, "get_http_client", lambda: fake)
-    # também fazer patch do wrapper de gateway.main se já foi importado
+    # também definir override direto na app para garantir uso do fake
     try:
         from gateway import main as gw_main
-        monkeypatch.setattr(gw_main, "get_dynamic_http_client", lambda: fake)
+        gw_main.app.dependency_overrides[gw_main.get_dynamic_http_client] = lambda: fake
     except Exception:
         pass
     yield

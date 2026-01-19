@@ -1,10 +1,6 @@
 FROM python:3.11-slim
 
-RUN apt-get update && apt-get install -y default-jre-headless curl ca-certificates && rm -rf /var/lib/apt/lists/*
-
-# Baixa o h2.jar (necessário para JayDeBeApi + H2)
-RUN mkdir -p /opt/h2 &&     curl -L -o /opt/h2/h2.jar https://repo1.maven.org/maven2/com/h2database/h2/2.2.224/h2-2.2.224.jar
-ENV H2_JAR_PATH=/opt/h2/h2.jar
+RUN apt-get update && apt-get install -y curl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
