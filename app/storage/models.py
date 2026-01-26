@@ -1,6 +1,8 @@
 from typing import Optional
 from pydantic import BaseModel, Field, EmailStr, validator
-from datetime import date
+from datetime import date, datetime
+from enum import Enum
+import uuid
 
 class ClientBase(BaseModel):
     nome: str = Field(..., min_length=1, max_length=255)
@@ -80,3 +82,53 @@ class ClientOut(ClientBase):
     id: int
     email: Optional[EmailStr] = None
     data_nascimento: Optional[date] = None
+
+
+# ============ MODELOS DE INVESTIMENTO ============
+
+class PerfilInvestidor(str, Enum):
+    """Perfil de risco do investidor."""
+    CONSERVADOR = "CONSERVADOR"
+    MODERADO = "MODERADO"
+    ARROJADO = "ARROJADO"
+
+
+class TipoInvestimento(str, Enum):
+    """Tipos de investimento disponíveis."""
+    RENDA_FIXA = "RENDA_FIXA"
+    ACOES = "ACOES"
+    FUNDOS = "FUNDOS"
+    CRIPTO = "CRIPTO"
+
+
+class InvestimentoBase(BaseModel):
+    """Modelo base para investimento."""
+    cliente_id: int
+    tipo_investimento: TipoInvestimento
+    ticker: Optional[str] = Field(default=None, description="Código do ativo (ex: PETR4.SA, BTC-USD)")
+    valor_investido: float = Field(..., gt=0, description="Valor investido em reais")
+    rentabilidade: Optional[float] = Field(default=0.0, description="Rentabilidade acumulada (%)")
+    ativo: bool = Field(default=True, description="Se o investimento está ativo")
+
+
+class InvestimentoCreate(InvestimentoBase):
+    """Modelo para criar investimento."""
+    pass
+
+
+class InvestimentoUpdate(BaseModel):
+    """Modelo para atualizar investimento."""
+    tipo_investimento: Optional[TipoInvestimento] = None
+    ticker: Optional[str] = None
+    valor_investido: Optional[float] = Field(default=None, gt=0)
+    rentabilidade: Optional[float] = None
+    ativo: Optional[bool] = None
+
+
+class InvestimentoOut(InvestimentoBase):
+    """Modelo de saída para investimento."""
+    id: int
+    data_aplicacao: datetime
+
+    class Config:
+        from_attributes = True

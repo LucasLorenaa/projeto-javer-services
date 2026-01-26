@@ -1,6 +1,7 @@
 import os
 import psycopg2
 from psycopg2 import sql
+import sqlite3
 
 # Configurações PostgreSQL
 DB_HOST = os.getenv("DB_HOST", "localhost")
@@ -27,39 +28,59 @@ def get_connection():
         conn.autocommit = True
         return conn
     except psycopg2.OperationalError:
-        # Fallback para testes: sqlite in-memory
-        import sqlite3
+        # Fallback para testes: sqlite in-memory com schema garantido
         if not hasattr(get_connection, "_test_cache"):
-            get_connection._test_cache = sqlite3.connect(":memory:", check_same_thread=False)
+            conn = sqlite3.connect(":memory:", check_same_thread=False)
+            _ensure_sqlite_schema(conn)
+            get_connection._test_cache = conn
         return get_connection._test_cache
+
+
+def _ensure_sqlite_schema(conn: sqlite3.Connection):
+    """Garante schema mínimo em sqlite para testes em memória."""
+    cur = conn.cursor()
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS clients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            telefone INTEGER UNIQUE,
+            email TEXT UNIQUE,
+            data_nascimento DATE,
+            correntista INTEGER,
+            score_credito REAL,
+            saldo_cc REAL,
+            senha_hash TEXT
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS investments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cliente_id INTEGER NOT NULL,
+            tipo_investimento TEXT NOT NULL,
+            ticker TEXT,
+            valor_investido REAL NOT NULL,
+            rentabilidade REAL DEFAULT 0.0,
+            ativo INTEGER DEFAULT 1,
+            data_aplicacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (cliente_id) REFERENCES clients(id) ON DELETE CASCADE
+        )
+        """
+    )
+    conn.commit()
 
 
 def init_db():
     """
-    Cria a tabela 'clients' se não existir.
+    Cria as tabelas 'clients' e 'investments' se não existirem.
     """
     conn = get_connection()
     cur = conn.cursor()
     # Se estivermos no fallback sqlite (apenas testes), usa dialeto específico
-    import sqlite3
-
     if isinstance(conn, sqlite3.Connection):
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS clients (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
-                telefone INTEGER UNIQUE,
-                email TEXT UNIQUE,
-                data_nascimento DATE,
-                correntista INTEGER,
-                score_credito REAL,
-                saldo_cc REAL,
-                senha_hash TEXT
-            )
-            """
-        )
-        conn.commit()
+        _ensure_sqlite_schema(conn)
         return
 
     # SQL padrão PostgreSQL
@@ -84,7 +105,7 @@ def init_db():
     # Remover coluna de idade se existir (migrando para data_nascimento)
     try:
         cur.execute("ALTER TABLE clients DROP COLUMN IF EXISTS idade")
-    except:
+    except Exception:  # pragma: no cover - caminho só em migração PostgreSQL
         pass
 
     # Remove duplicados para permitir criação das constraints de unicidade
@@ -135,4 +156,69 @@ def init_db():
         """
     )
     conn.commit()
+    
+    # Criar tabela de investimentos
+    create_investments_table()
 
+
+def create_investments_table():
+    """
+    Cria a tabela 'investments' para armazenar investimentos dos clientes.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    import sqlite3
+
+    if isinstance(conn, sqlite3.Connection):
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS investments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cliente_id INTEGER NOT NULL,
+                tipo_investimento TEXT NOT NULL,
+                ticker TEXT,
+                valor_investido REAL NOT NULL,
+                rentabilidade REAL DEFAULT 0.0,
+                ativo INTEGER DEFAULT 1,
+                data_aplicacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (cliente_id) REFERENCES clients(id) ON DELETE CASCADE
+            )
+            """
+        )
+        conn.commit()
+        return
+
+    else:  # pragma: no cover - caminhos exclusivos de PostgreSQL
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS investments (
+                id SERIAL PRIMARY KEY,
+                cliente_id INTEGER NOT NULL,
+                tipo_investimento VARCHAR(50) NOT NULL,
+                ticker VARCHAR(50),
+                valor_investido DOUBLE PRECISION NOT NULL CHECK (valor_investido > 0),
+                rentabilidade DOUBLE PRECISION DEFAULT 0.0,
+                ativo BOOLEAN DEFAULT TRUE,
+                data_aplicacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (cliente_id) REFERENCES clients(id) ON DELETE CASCADE
+            )
+            """
+        )
+        
+        # Criar índice para melhorar performance de consultas por cliente
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_investments_cliente_id 
+            ON investments(cliente_id)
+            """
+        )
+        
+        # Criar índice para consultas por ticker
+        cur.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_investments_ticker 
+            ON investments(ticker)
+            """
+        )
+        
+        conn.commit()

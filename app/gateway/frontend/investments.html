@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investimentos - Javer Services</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3);
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .patrimonio-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .patrimonio-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .patrimonio-value {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #5568d3;
+        }
+
+        .btn-delete:hover {
+            background: #ff5252;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            display: block;
+        }
+
+        .message.warning {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            display: block;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .projecao-box {
+            background: linear-gradient(135deg, #12c2e9 0%, #c471f5 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .alocacao-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .alocacao-tipo {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .alocacao-barra {
+            flex: 1;
+            margin: 0 15px;
+            background: #ddd;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .alocacao-preenchimento {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+        }
+
+        .alocacao-percentual {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .cotacao-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .cotacao-card h3 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .cotacao-preco {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .cotacao-variacao {
+            font-size: 18px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .cotacao-variacao.positivo {
+            background: #27ae60;
+        }
+
+        .cotacao-variacao.negativo {
+            background: #e74c3c;
+        }
+
+        .indice-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 8px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .indice-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .indice-nome {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .indice-preco {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 5px 0;
+        }
+
+        .indice-variacao {
+            font-size: 14px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-buttons {
+                width: 100%;
+                margin-top: 15px;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 Investimentos - Javer Services</h1>
+            <div class="header-buttons">
+                <button class="btn btn-primary" onclick="showCreateForm()">➕ Novo Investimento</button>
+                <button class="btn btn-primary" onclick="showBolsaValores()">📊 Bolsa de Valores</button>
+                <button class="btn btn-secondary" onclick="window.location.href='/dashboard'">🏠 Voltar ao Dashboard</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Patrimônio Total -->
+            <div class="card">
+                <h2>💰 Patrimônio Total</h2>
+                <div class="patrimonio-box">
+                    <div class="patrimonio-label">Patrimônio</div>
+                    <div class="patrimonio-value" id="patrimonioValue">R$ 0,00</div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Saldo Conta</div>
+                        <div class="info-value" id="saldoContaValue">R$ 0,00</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Total Investido</div>
+                        <div class="info-value" id="totalInvestidoValue">R$ 0,00</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Perfil de Risco</div>
+                        <div class="info-value" id="perfilValue">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Número de Ativos</div>
+                        <div class="info-value" id="numAtivosValue">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projeção de Retorno -->
+            <div class="card">
+                <h2>📊 Projeção Anual</h2>
+                <div class="projecao-box">
+                    <div class="patrimonio-label">Retorno Projetado</div>
+                    <div class="patrimonio-value" id="projecaoValue">R$ 0,00</div>
+                    <div style="font-size: 16px; margin-top: 10px;">
+                        <span id="taxaProjecaoValue">0%</span> de retorno anual
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Patrimônio Base</div>
+                        <div class="info-value" id="patrimonioBaseValue">R$ 0,00</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Base de Cálculo</div>
+                        <div class="info-value" id="baseCalculoValue">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bolsa de Valores -->
+            <div class="card full-width" id="bolsaValoresContainer" style="display: none;">
+                <h2>📊 Bolsa de Valores - Cotações em Tempo Real</h2>
+                <div class="message" id="bolsaMessage"></div>
+                
+                <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="tickerSearch" placeholder="Digite o ticker (Ex: PETR4.SA, AAPL, BTC-USD)" 
+                           style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                    <button class="btn btn-primary" onclick="buscarCotacao()">🔍 Buscar</button>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-size: 14px; color: #555;">Última atualização: <span id="bolsaLastUpdate">-</span></div>
+                    <div style="font-size: 14px; color: #555;">Auto-atualização ativa (60s)</div>
+                </div>
+
+                <div id="cotacaoResult" style="margin-top: 20px;"></div>
+
+                <div style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px;">📈 Principais Índices</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;" id="indicesGrid">
+                        <div style="text-align: center; color: #999;">Carregando índices...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Watchlist personalizada -->
+            <div class="card full-width" id="watchlistContainer" style="display: none;">
+                <h2>⭐ Watchlist</h2>
+                <div class="message" id="watchlistMessage"></div>
+
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
+                    <input type="text" id="watchlistInput" placeholder="Adicionar ticker (Ex: AAPL, MSFT, PETR4.SA)" 
+                           style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                    <button class="btn btn-primary" onclick="addWatchlistTicker()">➕ Adicionar</button>
+                    <button class="btn btn-secondary" onclick="refreshWatchlist(true)">🔄 Atualizar watchlist</button>
+                </div>
+
+                <div style="font-size: 14px; color: #555; margin-bottom: 10px;">Última atualização: <span id="watchlistLastUpdate">-</span></div>
+
+                <div id="watchlistGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                    <div style="text-align: center; color: #999;">Carregando watchlist...</div>
+                </div>
+            </div>
+
+            <!-- Serviços de Investimentos Atuais -->
+            <div class="card full-width">
+                <h2>📊 Serviços de Investimentos Atuais</h2>
+                <div class="message" id="investmentMessage"></div>
+                
+                <table id="investmentsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo</th>
+                            <th>Ticker</th>
+                            <th>Valor Investido</th>
+                            <th>Rentabilidade</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="investmentsTbody">
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: #999;">Carregando investimentos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Alocação da Carteira -->
+            <div class="card full-width">
+                <h2>📋 Alocação da Carteira</h2>
+                <div id="alocacaoContent" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- Criar Investimento -->
+            <div class="card full-width" id="createFormContainer" style="display: none;">
+                <h2>➕ Adicionar Novo Investimento</h2>
+                <div class="message" id="message"></div>
+                
+                <form onsubmit="saveInvestimento(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label for="tipoInvestimento">Tipo de Investimento</label>
+                            <select id="tipoInvestimento" required>
+                                <option value="">Selecione um tipo...</option>
+                                <option value="RENDA_FIXA">Renda Fixa</option>
+                                <option value="ACOES">Ações</option>
+                                <option value="FUNDOS">Fundos</option>
+                                <option value="CRIPTO">Criptomoedas</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ticker">Ticker (opcional)</label>
+                            <input type="text" id="ticker" placeholder="Ex: PETR4.SA, AAPL, BTC-USD">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="valorInvestido">Valor Investido (R$)</label>
+                            <input type="number" id="valorInvestido" step="0.01" min="0" required placeholder="1000.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="rentabilidade">Rentabilidade (%)</label>
+                            <input type="number" id="rentabilidade" step="0.01" placeholder="0">
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1; display: flex; align-items: center;">
+                            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600; margin: 0;">
+                                <span>Investimento Ativo</span>
+                                <input type="checkbox" id="ativo" checked>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn btn-primary">💾 Salvar Investimento</button>
+                        <button type="button" class="btn btn-secondary" onclick="cancelCreateForm()">❌ Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let investments = [];
+        let autoRefreshInterval = null;
+        let watchlistTickers = [];
+
+        function init() {
+            const userData = localStorage.getItem('cliente');
+            
+            if (!userData) {
+                window.location.href = '/login';
+                return;
+            }
+
+            currentUser = JSON.parse(userData);
+            loadAllData();
+            initWatchlist();
+            startAutoRefresh();
+        }
+
+        async function loadAllData() {
+            await Promise.all([
+                loadPatrimonio(),
+                loadProjecao(),
+                loadAlocacao(),
+                loadInvestimentos()
+            ]);
+        }
+
+        async function loadPatrimonio() {
+            try {
+                const response = await fetch(`/calculos/patrimonio/${currentUser.id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('patrimonioValue').textContent = 
+                        `R$ ${data.patrimonio_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
+                    document.getElementById('saldoContaValue').textContent = 
+                        `R$ ${data.saldo_conta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
+                    document.getElementById('totalInvestidoValue').textContent = 
+                        `R$ ${data.total_investimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
+                    document.getElementById('patrimonioBaseValue').textContent = 
+                        `R$ ${data.patrimonio_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
+                }
+            } catch (err) {
+                console.error('Erro ao carregar patrimônio:', err);
+            }
+        }
+
+        async function loadProjecao() {
+            try {
+                const response = await fetch(`/calculos/projecao/${currentUser.id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('projecaoValue').textContent = 
+                        `R$ ${data.projecao_anual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
+                    document.getElementById('taxaProjecaoValue').textContent = `${data.taxa_retorno}%`;
+                    document.getElementById('perfilValue').textContent = data.perfil_investidor;
+                    document.getElementById('baseCalculoValue').textContent = data.perfil_investidor;
+                }
+            } catch (err) {
+                console.error('Erro ao carregar projeção:', err);
+            }
+        }
+
+        async function loadAlocacao() {
+            try {
+                const response = await fetch(`/analises/carteira/${currentUser.id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('numAtivosValue').textContent = data.numero_investimentos;
+                    
+                    let alocacaoHtml = '';
+                    for (const [tipo, info] of Object.entries(data.alocacao_por_tipo)) {
+                        alocacaoHtml += `
+                            <div class="alocacao-item">
+                                <div class="alocacao-tipo">${tipo}</div>
+                                <div class="alocacao-barra">
+                                    <div class="alocacao-preenchimento" style="width: ${info.percentual_carteira}%"></div>
+                                </div>
+                                <div class="alocacao-percentual">${info.percentual_carteira}%</div>
+                            </div>
+                        `;
+                    }
+                    document.getElementById('alocacaoContent').innerHTML = alocacaoHtml || '<p style="color: #999;">Nenhum investimento para exibir</p>';
+                }
+            } catch (err) {
+                console.error('Erro ao carregar alocação:', err);
+            }
+        }
+
+        async function loadInvestimentos() {
+            try {
+                const response = await fetch(`/investments/cliente/${currentUser.id}`);
+                if (response.ok) {
+                    investments = await response.json();
+                    renderInvestimentos();
+                }
+            } catch (err) {
+                console.error('Erro ao carregar investimentos:', err);
+            }
+        }
+
+        function renderInvestimentos() {
+            const tbody = document.getElementById('investmentsTbody');
+            tbody.innerHTML = '';
+
+            if (investments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999;">Nenhum investimento cadastrado</td></tr>';
+                return;
+            }
+
+            investments.forEach(inv => {
+                const tr = document.createElement('tr');
+                const dataApp = new Date(inv.data_aplicacao).toLocaleDateString('pt-BR');
+                const status = inv.ativo ? '✅ Ativo' : '❌ Inativo';
+                
+                tr.innerHTML = `
+                    <td>#${inv.id}</td>
+                    <td>${inv.tipo_investimento}</td>
+                    <td>${inv.ticker || '-'}</td>
+                    <td>R$ ${inv.valor_investido.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}</td>
+                    <td>${inv.rentabilidade || 0}%</td>
+                    <td>${status}</td>
+                    <td>${dataApp}</td>
+                    <td class="actions">
+                        <button class="btn-small btn-delete" onclick="deleteInvestimento(${inv.id})">🗑️ Deletar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function showCreateForm() {
+            document.getElementById('createFormContainer').style.display = 'block';
+            document.getElementById('createFormContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelCreateForm() {
+            document.getElementById('createFormContainer').style.display = 'none';
+            document.getElementById('tipoInvestimento').value = '';
+            document.getElementById('ticker').value = '';
+            document.getElementById('valorInvestido').value = '';
+            document.getElementById('rentabilidade').value = '';
+            document.getElementById('ativo').checked = true;
+        }
+
+        async function saveInvestimento(event) {
+            event.preventDefault();
+
+            const investimento = {
+                cliente_id: currentUser.id,
+                tipo_investimento: document.getElementById('tipoInvestimento').value,
+                ticker: document.getElementById('ticker').value || null,
+                valor_investido: parseFloat(document.getElementById('valorInvestido').value),
+                rentabilidade: parseFloat(document.getElementById('rentabilidade').value) || 0,
+                ativo: document.getElementById('ativo').checked
+            };
+
+            try {
+                const response = await fetch('/investments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(investimento)
+                });
+
+                if (response.ok) {
+                    showMessage('✅ Investimento criado com sucesso!', 'success');
+                    cancelCreateForm();
+                    await loadAllData();
+                } else {
+                    const error = await response.json();
+                    showMessage(`❌ Erro: ${error.detail || 'Falha ao criar investimento'}`, 'error');
+                }
+            } catch (err) {
+                showMessage(`❌ Erro: ${err.message}`, 'error');
+            }
+        }
+
+        async function deleteInvestimento(invId) {
+            if (!confirm('Tem certeza que deseja deletar este investimento?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/investments/${invId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok || response.status === 204) {
+                    showMessage('✅ Investimento deletado com sucesso!', 'success');
+                    await loadAllData();
+                } else {
+                    showMessage('❌ Erro ao deletar investimento', 'error');
+                }
+            } catch (err) {
+                showMessage(`❌ Erro: ${err.message}`, 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            const msgElement = document.getElementById('message');
+            msgElement.textContent = message;
+            msgElement.className = `message ${type}`;
+            
+            setTimeout(() => {
+                msgElement.className = 'message';
+            }, 5000);
+        }
+
+        // ===================== Auto refresh =====================
+        function startAutoRefresh() {
+            stopAutoRefresh();
+            autoRefreshInterval = setInterval(() => {
+                carregarIndices(true);
+                refreshWatchlist(true);
+            }, 60000);
+            // Atualiza imediatamente quando liga
+            carregarIndices(true);
+            refreshWatchlist(true);
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
+        // ===================== Watchlist =====================
+        function initWatchlist() {
+            try {
+                const stored = localStorage.getItem('watchlistTickers');
+                watchlistTickers = stored ? JSON.parse(stored) : ['AAPL', 'MSFT', 'PETR4.SA'];
+            } catch {
+                watchlistTickers = ['AAPL', 'MSFT', 'PETR4.SA'];
+            }
+            refreshWatchlist();
+        }
+
+        function saveWatchlist() {
+            localStorage.setItem('watchlistTickers', JSON.stringify(watchlistTickers));
+        }
+
+        function showWatchlistMessage(message, type = 'warning') {
+            const el = document.getElementById('watchlistMessage');
+            el.textContent = message;
+            el.className = `message ${type}`;
+            setTimeout(() => {
+                el.className = 'message';
+            }, 4000);
+        }
+
+        function addWatchlistTicker() {
+            const input = document.getElementById('watchlistInput');
+            const ticker = input.value.trim().toUpperCase();
+            if (!ticker) return;
+            if (watchlistTickers.includes(ticker)) {
+                showWatchlistMessage('⚠️ Ticker já na lista', 'warning');
+                return;
+            }
+            watchlistTickers.push(ticker);
+            saveWatchlist();
+            input.value = '';
+            showWatchlistMessage('✅ Ticker adicionado', 'success');
+            refreshWatchlist(true);
+        }
+
+        function removeWatchlistTicker(ticker) {
+            watchlistTickers = watchlistTickers.filter(t => t !== ticker);
+            saveWatchlist();
+            refreshWatchlist(true);
+        }
+
+        async function refreshWatchlist(force = false) {
+            const grid = document.getElementById('watchlistGrid');
+            if (!grid) return;
+            if (watchlistTickers.length === 0) {
+                grid.innerHTML = '<div style="text-align:center; color:#999;">Adicione tickers para acompanhar</div>';
+                return;
+            }
+
+            grid.innerHTML = '<div style="text-align:center; color:#999;">Carregando...</div>';
+
+            const requests = watchlistTickers.map(ticker => (
+                fetch(`/analises/mercado/${ticker}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(data => ({ ticker, data }))
+                    .catch(() => ({ ticker, data: null }))
+            ));
+
+            const results = await Promise.all(requests);
+
+            let html = '';
+            for (const { ticker, data } of results) {
+                const preco = data && data.preco_atual != null ? data.preco_atual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A';
+                const variacao = data ? (data.variacao_percentual || 0).toFixed(2) : '0.00';
+                const variacaoClass = data && data.variacao_dia >= 0 ? 'positivo' : 'negativo';
+                const variacaoSimbolo = data && data.variacao_dia >= 0 ? '▲' : '▼';
+                html += `
+                    <div class="indice-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="indice-nome">${ticker}</div>
+                            <button class="btn btn-danger" style="padding:6px 10px;" onclick="removeWatchlistTicker('${ticker}')">🗑️</button>
+                        </div>
+                        <div class="indice-preco">${preco}</div>
+                        <div class="indice-variacao ${variacaoClass}">${variacaoSimbolo} ${variacao}%</div>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html;
+
+            try {
+                const now = new Date();
+                document.getElementById('watchlistLastUpdate').textContent = now.toLocaleString('pt-BR');
+            } catch {}
+        }
+
+        function showBolsaValores() {
+            const container = document.getElementById('bolsaValoresContainer');
+            const watchlistContainer = document.getElementById('watchlistContainer');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                watchlistContainer.style.display = 'block';
+                startAutoRefresh();
+            } else {
+                container.style.display = 'none';
+                watchlistContainer.style.display = 'none';
+                stopAutoRefresh();
+            }
+        }
+
+        async function buscarCotacao() {
+            const ticker = document.getElementById('tickerSearch').value.trim();
+            if (!ticker) {
+                document.getElementById('bolsaMessage').textContent = '⚠️ Digite um ticker para buscar';
+                document.getElementById('bolsaMessage').className = 'message warning';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/analises/mercado/${ticker}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    mostrarCotacao(data);
+                } else {
+                    const error = await response.json();
+                    document.getElementById('bolsaMessage').textContent = `❌ ${error.detail || 'Ticker não encontrado'}`;
+                    document.getElementById('bolsaMessage').className = 'message error';
+                }
+            } catch (err) {
+                document.getElementById('bolsaMessage').textContent = `❌ Erro ao buscar cotação: ${err.message}`;
+                document.getElementById('bolsaMessage').className = 'message error';
+            }
+        }
+
+        function mostrarCotacao(data) {
+            const variacaoClass = data.variacao_dia >= 0 ? 'positivo' : 'negativo';
+            const variacaoSimbolo = data.variacao_dia >= 0 ? '▲' : '▼';
+            
+            const html = `
+                <div class="cotacao-card">
+                    <h3>${data.ticker}</h3>
+                    <div class="cotacao-preco">R$ ${data.preco_atual ? data.preco_atual.toFixed(2) : 'N/A'}</div>
+                    <div class="cotacao-variacao ${variacaoClass}">
+                        ${variacaoSimbolo} ${data.variacao_percentual ? data.variacao_percentual.toFixed(2) : '0.00'}% 
+                        (${data.variacao_dia >= 0 ? '+' : ''}${data.variacao_dia ? data.variacao_dia.toFixed(2) : '0.00'})
+                    </div>
+                    <div style="margin-top: 15px; font-size: 14px;">
+                        <div>Volume: ${data.volume ? data.volume.toLocaleString('pt-BR') : 'N/A'}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('cotacaoResult').innerHTML = html;
+            document.getElementById('bolsaMessage').textContent = '';
+        }
+
+        async function carregarIndices(force = false) {
+            const indices = [
+                { ticker: '^BVSP', nome: 'Ibovespa' },
+                { ticker: '^GSPC', nome: 'S&P 500' },
+                { ticker: '^DJI', nome: 'Dow Jones' },
+                { ticker: '^IXIC', nome: 'NASDAQ' },
+                { ticker: 'BTC-USD', nome: 'Bitcoin' },
+                { ticker: 'ETH-USD', nome: 'Ethereum' }
+            ];
+
+            const grid = document.getElementById('indicesGrid');
+            grid.innerHTML = '<div style="text-align: center; color: #999;">Carregando...</div>';
+
+            // Buscar cotações em paralelo para maior performance
+            const requests = indices.map(indice => (
+                fetch(`/analises/mercado/${indice.ticker}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(data => ({ indice, data }))
+                    .catch(() => ({ indice, data: null }))
+            ));
+
+            const results = await Promise.all(requests);
+
+            let html = '';
+            for (const result of results) {
+                const { indice, data } = result;
+                if (data) {
+                    const variacaoClass = data.variacao_dia >= 0 ? 'positivo' : 'negativo';
+                    const variacaoSimbolo = data.variacao_dia >= 0 ? '▲' : '▼';
+                    html += `
+                        <div class="indice-card">
+                            <div class="indice-nome">${indice.nome}</div>
+                            <div class="indice-preco">${data.preco_atual ? data.preco_atual.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : 'N/A'}</div>
+                            <div class="indice-variacao ${variacaoClass}">${variacaoSimbolo} ${data.variacao_percentual ? data.variacao_percentual.toFixed(2) : '0.00'}%</div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="indice-card">
+                            <div class="indice-nome">${indice.nome}</div>
+                            <div style="color:#999">Erro ao carregar</div>
+                        </div>
+                    `;
+                }
+            }
+
+            grid.innerHTML = html || '<div style="text-align: center; color: #999;">Erro ao carregar índices</div>';
+
+            // Atualiza carimbo de tempo
+            try {
+                const now = new Date();
+                document.getElementById('bolsaLastUpdate').textContent = now.toLocaleString('pt-BR');
+            } catch {}
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

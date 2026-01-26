@@ -1,6 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field, EmailStr, validator
-from datetime import date
+from datetime import date, datetime
+from enum import Enum
 
 class ClientBase(BaseModel):
     nome: str = Field(..., min_length=1, max_length=255)
@@ -87,3 +88,84 @@ class ScoreOut(BaseModel):
     nome: str
     saldo_cc: Optional[float]
     score_calculado: Optional[float]
+
+
+# ============ MODELOS DE INVESTIMENTO ============
+
+class PerfilInvestidor(str, Enum):
+    """Perfil de risco do investidor."""
+    CONSERVADOR = "CONSERVADOR"
+    MODERADO = "MODERADO"
+    ARROJADO = "ARROJADO"
+
+
+class TipoInvestimento(str, Enum):
+    """Tipos de investimento disponíveis."""
+    RENDA_FIXA = "RENDA_FIXA"
+    ACOES = "ACOES"
+    FUNDOS = "FUNDOS"
+    CRIPTO = "CRIPTO"
+
+
+class InvestimentoBase(BaseModel):
+    """Modelo base para investimento."""
+    cliente_id: int
+    tipo_investimento: TipoInvestimento
+    ticker: Optional[str] = Field(default=None, description="Código do ativo (ex: PETR4.SA, BTC-USD)")
+    valor_investido: float = Field(..., gt=0, description="Valor investido em reais")
+    rentabilidade: Optional[float] = Field(default=0.0, description="Rentabilidade acumulada (%)")
+    ativo: bool = Field(default=True, description="Se o investimento está ativo")
+
+
+class InvestimentoCreate(InvestimentoBase):
+    """Modelo para criar investimento."""
+    pass
+
+
+class InvestimentoUpdate(BaseModel):
+    """Modelo para atualizar investimento."""
+    tipo_investimento: Optional[TipoInvestimento] = None
+    ticker: Optional[str] = None
+    valor_investido: Optional[float] = Field(default=None, gt=0)
+    rentabilidade: Optional[float] = None
+    ativo: Optional[bool] = None
+
+
+class InvestimentoOut(InvestimentoBase):
+    """Modelo de saída para investimento."""
+    id: int
+    data_aplicacao: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ============ MODELOS DE ANÁLISE ============
+
+class ProjecaoRetorno(BaseModel):
+    """Modelo para projeção de retorno anual."""
+    cliente_id: int
+    nome: str
+    perfil_investidor: PerfilInvestidor
+    patrimonio_total: float
+    projecao_anual: float
+    taxa_retorno: float
+
+
+class PatrimonioCliente(BaseModel):
+    """Modelo para cálculo de patrimônio."""
+    cliente_id: int
+    nome: str
+    saldo_conta: float
+    total_investimentos: float
+    patrimonio_total: float
+
+
+class AnaliseMercado(BaseModel):
+    """Modelo para análise de mercado de um ticker."""
+    ticker: str
+    preco_atual: Optional[float]
+    variacao_dia: Optional[float]
+    variacao_percentual: Optional[float]
+    volume: Optional[int]
+    historico_disponivel: bool

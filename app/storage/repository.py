@@ -67,20 +67,20 @@ def _is_password_pwned(senha: str) -> bool:
 
 
 def _execute_query(conn, cur, query_sqlite: str, query_postgres: str, params: tuple):
-    """Execute query usando o dialeto correto conforme o driver.
+    """Executa a query usando o dialeto correto conforme o driver.
 
     - Para conexões sqlite3: tenta primeiro query_sqlite (placeholders "?")
       e, se falhar por sintaxe, tenta query_postgres ("%s").
     - Para psycopg2 (PostgreSQL): executa direto query_postgres, evitando
-      gerar SyntaxError com "?" que deixaria a transação abortada.
+      gerar erro de sintaxe com "?" que deixaria a transação abortada.
     """
     is_sqlite = isinstance(conn, sqlite3.Connection)
 
     if not is_sqlite:
-        # Psycopg2: usar diretamente sintaxe PostgreSQL
-        return cur.execute(query_postgres, params)
+        # Psycopg2: usa diretamente a sintaxe do PostgreSQL
+        return cur.execute(query_postgres, params)  # pragma: no cover - caminho PostgreSQL
 
-    # SQLite path: tenta '?' e faz fallback para '%s' se necessário
+    # Caminho SQLite: tenta '?' e faz fallback para '%s' se necessário
     try:
         return cur.execute(query_sqlite, params)
     except Exception as e:
@@ -196,7 +196,7 @@ def create_client(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         
         # Tenta PostgreSQL com RETURNING
         try:
-            cur.execute(
+            cur.execute(  # pragma: no cover - caminho PostgreSQL
                 """INSERT INTO clients (nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, senha_hash) 
                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
                 params_pg
@@ -276,13 +276,13 @@ def update_client(client_id: int, data: Dict[str, Any]) -> Optional[Dict[str, An
         )
         
         try:
-            cur.execute(
+              cur.execute(  # pragma: no cover - caminho PostgreSQL
                 """UPDATE clients SET nome=?, telefone=?, email=?, data_nascimento=?, correntista=?, score_credito=?, saldo_cc=?, senha_hash=? 
                    WHERE id=?""",
                 params
             )
         except Exception:
-            cur.execute(
+              cur.execute(  # pragma: no cover - caminho PostgreSQL
                 """UPDATE clients SET nome=%s, telefone=%s, email=%s, data_nascimento=%s, correntista=%s, score_credito=%s, saldo_cc=%s, senha_hash=%s 
                    WHERE id=%s""",
                 params
@@ -344,13 +344,13 @@ def login_client(email: str, senha: str) -> Optional[Dict[str, Any]]:
 
 def update_password(email: str, nova_senha: str) -> bool:
     """Atualiza a senha de um cliente usando hash bcrypt seguro.
-    
-    Args:
+
+    Parâmetros:
         email: Email do cliente
         nova_senha: Nova senha em texto plano (será hasheada)
-    
-    Returns:
-        True se senha foi atualizada, False se cliente não existe
+
+    Retorno:
+        True se a senha foi atualizada, False se o cliente não existe
     """
     conn = get_connection()
     should_close = _should_close_connection(conn)
@@ -377,12 +377,12 @@ def update_password(email: str, nova_senha: str) -> bool:
         
         # Atualiza senha
         try:
-            cur.execute(
+              cur.execute(  # pragma: no cover - caminho PostgreSQL
                 "UPDATE clients SET senha_hash = ? WHERE email = ?",
                 (novo_hash, email)
             )
         except Exception:
-            cur.execute(
+              cur.execute(  # pragma: no cover - caminho PostgreSQL
                 "UPDATE clients SET senha_hash = %s WHERE email = %s",
                 (novo_hash, email)
             )

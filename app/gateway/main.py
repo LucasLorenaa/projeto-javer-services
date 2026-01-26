@@ -4,8 +4,13 @@ from fastapi.staticfiles import StaticFiles
 import httpx
 import os
 from pathlib import Path
-from .models import ClientCreate, ClientUpdate, ClientOut, ScoreOut, ClientRegister, ClientLogin, ClientPasswordReset
+from .models import (
+    ClientCreate, ClientUpdate, ClientOut, ScoreOut, ClientRegister, ClientLogin, ClientPasswordReset,
+    InvestimentoCreate, InvestimentoUpdate, InvestimentoOut, ProjecaoRetorno, PatrimonioCliente, AnaliseMercado
+)
 from . import client as client_module
+
+# Importar YahooFinanceService apenas quando necessário (lazy import)
 
 
 def get_dynamic_http_client():
@@ -13,6 +18,9 @@ def get_dynamic_http_client():
 
 
 app = FastAPI(title="JAVER Gateway Service", version="1.0.0")
+# Cache simples para cotações de mercado (TTL 60s)
+MARKET_CACHE: dict[str, dict] = {}
+CACHE_TTL_SECONDS = 60
 
 frontend_dir = Path(__file__).parent / "frontend"
 if frontend_dir.exists():
@@ -73,6 +81,23 @@ def dashboard_page():
     if frontend_file.exists():
         return FileResponse(str(frontend_file), media_type="text/html")
     return {"message": "Dashboard não disponível"}
+
+
+# ROTA EXATA PARA PÁGINA DE INVESTIMENTOS - DEVE VIR ANTES DAS ROTAS /investments/*
+@app.get("/investments-page")
+def investments_page():
+    frontend_file = Path(__file__).parent / "frontend" / "investments.html"
+    if frontend_file.exists():
+        return FileResponse(str(frontend_file), media_type="text/html")
+    return {"message": "Página de investimentos não disponível"}
+
+
+@app.get("/investments.html")
+def investments_page_html():
+    frontend_file = Path(__file__).parent / "frontend" / "investments.html"
+    if frontend_file.exists():
+        return FileResponse(str(frontend_file), media_type="text/html")
+    return {"message": "Página de investimentos não disponível"}
 
 
 @app.get("/health")
@@ -198,3 +223,271 @@ def score_credito(client_id: int, client: httpx.Client = Depends(get_dynamic_htt
         "saldo_cc": saldo,
         "score_calculado": score_calculado,
     }
+
+
+# ============ ENDPOINTS DE INVESTIMENTOS ============
+
+@app.get("/investments", response_model=list[InvestimentoOut])
+def list_investments(client: httpx.Client = Depends(get_dynamic_http_client)):
+    """Lista todos os investimentos."""
+    client = client or client_module.get_http_client()
+    r = client.get("/investments")
+    r.raise_for_status()
+    return r.json()
+
+
+@app.get("/investments/{investment_id}", response_model=InvestimentoOut)
+def get_investment(investment_id: int, client: httpx.Client = Depends(get_dynamic_http_client)):
+    """Obtém um investimento específico."""
+    client = client or client_module.get_http_client()
+    r = client.get(f"/investments/{investment_id}")
+    if r.status_code == 404:
+        raise HTTPException(status_code=404, detail="Investimento não encontrado")
+    r.raise_for_status()
+    return r.json()
+
+
+@app.get("/investments/cliente/{cliente_id}", response_model=list[InvestimentoOut])
+def list_investments_by_cliente(cliente_id: int, client: httpx.Client = Depends(get_dynamic_http_client)):
+    """Lista investimentos de um cliente."""
+    client = client or client_module.get_http_client()
+    r = client.get(f"/investments/cliente/{cliente_id}")
+    r.raise_for_status()
+    return r.json()
+
+
+@app.post("/investments", response_model=InvestimentoOut, status_code=201)
+def create_investment(payload: InvestimentoCreate, client: httpx.Client = Depends(get_dynamic_http_client)):
+    """Cria um novo investimento."""
+    from .yahoo_finance_service import YahooFinanceService
+    
+    client = client or client_module.get_http_client()
+    
+    # Validar ticker se fornecido
+    if payload.ticker and not YahooFinanceService.validar_ticker(payload.ticker):
+        raise HTTPException(status_code=400, detail=f"Ticker '{payload.ticker}' não encontrado")
+    
+    r = client.post("/investments", json=payload.model_dump())
+    if r.status_code == 404:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    r.raise_for_status()
+    return r.json()
+
+
+@app.put("/investments/{investment_id}", response_model=InvestimentoOut)
+def update_investment(investment_id: int, payload: InvestimentoUpdate, client: httpx.Client = Depends(get_dynamic_http_client)):
+    """Atualiza um investimento."""
+    from .yahoo_finance_service import YahooFinanceService
+    
+    client = client or client_module.get_http_client()
+    
+    # Validar ticker se fornecido
+    if payload.ticker and not YahooFinanceService.validar_ticker(payload.ticker):
+        raise HTTPException(status_code=400, detail=f"Ticker '{payload.ticker}' não encontrado")
+    
+    r = client.put(f"/investments/{investment_id}", json=payload.model_dump(exclude_unset=True))
+    if r.status_code == 404:
+        raise HTTPException(status_code=404, detail="Investimento não encontrado")
+    r.raise_for_status()
+    return r.json()
+
+
+@app.delete("/investments/{investment_id}", status_code=204)
+def delete_investment(investment_id: int, client: httpx.Client = Depends(get_dynamic_http_client)):
+    """Deleta um investimento."""
+    client = client or client_module.get_http_client()
+    r = client.delete(f"/investments/{investment_id}")
+    if r.status_code == 404:
+        raise HTTPException(status_code=404, detail="Investimento não encontrado")
+    r.raise_for_status()
+    return
+
+
+# ============ ENDPOINTS DE CÁLCULOS E ANÁLISES ============
+
+@app.get("/calculos/projecao/{cliente_id}", response_model=ProjecaoRetorno)
+def projecao_retorno(cliente_id: int, client: httpx.Client = Depends(get_dynamic_http_client)):
+    """
+    Calcula projeção de retorno anual baseada no perfil do investidor.
+    
+    CONSERVADOR → patrimonio_total * 0.08 (8%)
+    MODERADO → patrimonio_total * 0.12 (12%)
+    ARROJADO → patrimonio_total * 0.18 (18%)
+    """
+    client = client or client_module.get_http_client()
+    
+    # Obter dados do cliente
+    r = client.get(f"/clients/{cliente_id}")
+    if r.status_code == 404:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    r.raise_for_status()
+    cliente_data = r.json()
+    
+    # Obter total investido
+    r_total = client.get(f"/investments/cliente/{cliente_id}/total")
+    if r_total.status_code == 404:
+        total_investido = 0.0
+    else:
+        total_investido = r_total.json().get("total_investido", 0.0)
+    
+    patrimonio_total = total_investido + (cliente_data.get("saldo_cc") or 0)
+    perfil = cliente_data.get("perfil_investidor", "CONSERVADOR")
+    
+    # Calcular taxa de retorno baseada no perfil
+    taxas = {
+        "CONSERVADOR": 0.08,
+        "MODERADO": 0.12,
+        "ARROJADO": 0.18
+    }
+    
+    taxa_retorno = taxas.get(perfil, 0.08)
+    projecao_anual = patrimonio_total * taxa_retorno
+    
+    return {
+        "cliente_id": cliente_id,
+        "nome": cliente_data.get("nome"),
+        "perfil_investidor": perfil,
+        "patrimonio_total": patrimonio_total,
+        "projecao_anual": round(projecao_anual, 2),
+        "taxa_retorno": taxa_retorno * 100
+    }
+
+
+@app.get("/calculos/patrimonio/{cliente_id}", response_model=PatrimonioCliente)
+def calcular_patrimonio(cliente_id: int, client: httpx.Client = Depends(get_dynamic_http_client)):
+    """Calcula o patrimônio total de um cliente."""
+    client = client or client_module.get_http_client()
+    
+    # Obter dados do cliente
+    r = client.get(f"/clients/{cliente_id}")
+    if r.status_code == 404:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    r.raise_for_status()
+    cliente_data = r.json()
+    
+    # Obter total investido
+    r_total = client.get(f"/investments/cliente/{cliente_id}/total")
+    if r_total.status_code == 404:
+        total_investimentos = 0.0
+    else:
+        total_investimentos = r_total.json().get("total_investido", 0.0)
+    
+    saldo_conta = cliente_data.get("saldo_cc") or 0.0
+    patrimonio_total = saldo_conta + total_investimentos
+    
+    return {
+        "cliente_id": cliente_id,
+        "nome": cliente_data.get("nome"),
+        "saldo_conta": saldo_conta,
+        "total_investimentos": total_investimentos,
+        "patrimonio_total": patrimonio_total
+    }
+
+
+@app.get("/analises/carteira/{cliente_id}")
+def analise_carteira(cliente_id: int, client: httpx.Client = Depends(get_dynamic_http_client)):
+    """
+    Analisa a carteira de investimentos de um cliente.
+    Retorna informações sobre alocação por tipo de investimento.
+    """
+    client = client or client_module.get_http_client()
+    
+    # Obter cliente
+    r = client.get(f"/clients/{cliente_id}")
+    if r.status_code == 404:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    r.raise_for_status()
+    
+    # Obter investimentos
+    r_inv = client.get(f"/investments/cliente/{cliente_id}")
+    investimentos = r_inv.json() if r_inv.status_code == 200 else []
+    
+    # Agrupar por tipo
+    por_tipo = {}
+    total_investido = 0.0
+    
+    for inv in investimentos:
+        tipo = inv.get("tipo_investimento", "DESCONHECIDO")
+        valor = inv.get("valor_investido", 0)
+        
+        if tipo not in por_tipo:
+            por_tipo[tipo] = {"quantidade": 0, "total": 0.0, "ativos": 0}
+        
+        por_tipo[tipo]["quantidade"] += 1
+        por_tipo[tipo]["total"] += valor
+        total_investido += valor
+        
+        if inv.get("ativo", False):
+            por_tipo[tipo]["ativos"] += 1
+    
+    # Calcular percentuais
+    alocacao = {}
+    for tipo, dados in por_tipo.items():
+        percentual = (dados["total"] / total_investido * 100) if total_investido > 0 else 0
+        alocacao[tipo] = {
+            "quantidade": dados["quantidade"],
+            "total": round(dados["total"], 2),
+            "ativos": dados["ativos"],
+            "percentual_carteira": round(percentual, 2)
+        }
+    
+    return {
+        "cliente_id": cliente_id,
+        "total_investido": round(total_investido, 2),
+        "numero_investimentos": len(investimentos),
+        "alocacao_por_tipo": alocacao
+    }
+
+
+@app.get("/analises/mercado/{ticker}", response_model=AnaliseMercado)
+def analise_mercado(ticker: str, client: httpx.Client = Depends(get_dynamic_http_client)):
+    """
+    Analisa informações de mercado de um ticker.
+    Retorna dados atuais do Yahoo Finance.
+    """
+    from .yahoo_finance_service import YahooFinanceService
+    
+    try:
+        # Cache: retorna dados recentes se disponíveis
+        from time import time
+        now = time()
+        cached = MARKET_CACHE.get(ticker)
+        if cached and (now - cached.get("ts", 0)) < CACHE_TTL_SECONDS:
+            info = cached["info"]
+        else:
+            info = YahooFinanceService.get_ticker_info(ticker)
+            if not info:
+                # Yahoo indisponível → usar fallback rápido para não deixar tela vazia
+                info = YahooFinanceService.get_fallback_info(ticker)
+            if info:
+                MARKET_CACHE[ticker] = {"info": info, "ts": now}
+        
+        if not info:
+            # Fallback amigável quando serviço externo falha ou sem internet
+            return {
+                "ticker": ticker,
+                "preco_atual": 0.0,
+                "variacao_dia": 0.0,
+                "variacao_percentual": 0.0,
+                "volume": 0,
+                "historico_disponivel": False
+            }
+        
+        return {
+            "ticker": ticker,
+            "preco_atual": info.get("preco_atual"),
+            "variacao_dia": info.get("variacao_dia"),
+            "variacao_percentual": info.get("variacao_percentual"),
+            "volume": info.get("volume"),
+            "historico_disponivel": True
+        }
+    except Exception:
+        # Fallback genérico em caso de exceção
+        return {
+            "ticker": ticker,
+            "preco_atual": 0.0,
+            "variacao_dia": 0.0,
+            "variacao_percentual": 0.0,
+            "volume": 0,
+            "historico_disponivel": False
+        }
