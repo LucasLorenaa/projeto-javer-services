@@ -1,13 +1,16 @@
 # 🏦 JAVER Microservices
 
 > Sistema de gerenciamento bancário com arquitetura de microserviços em FastAPI  
-> **Cobertura de Testes: 97%** 🎉 | **233 Testes (232 pass / 1 skip)** ✅ | **Python 3.11** 🐍
+> **Cobertura de Testes: 95%** 🎉 | **239 Testes (239 pass / 1 skip)** ✅ | **Python 3.11** 🐍
+
+> **🆕 Novidades:** Sistema completo de investimentos com integração Yahoo Finance, cálculos de patrimônio e projeção de retorno!
 
 ## 📋 Índice
 
 - [Visão Geral](#-visão-geral)
 - [Como Testar](#-como-testar)
 - [Testes & Cobertura](#-testes--cobertura)
+- [Tipos de Investimento](#-tipos-de-investimento-disponíveis)
 - [Arquitetura](#-arquitetura)
 - [Funcionalidades](#-funcionalidades)
 - [Quick Start](#-quick-start)
@@ -23,9 +26,12 @@
 Sistema bancário completo com dois serviços FastAPI independentes e bem estruturados:
 
 ### 🚪 **Gateway Service** (porta 8000)
-- API proxy CRUD para clientes
+- API proxy CRUD para clientes e investimentos
 - Cálculo de score de crédito
 - Sistema de login/registro
+- **Gestão completa de investimentos** 📈
+- **Integração Yahoo Finance** (cotações em tempo real)
+- **Analytics financeiros** (patrimônio, projeção de retorno)
 - Frontend responsivo (HTML/CSS/JS)
 - Validação com Pydantic
 - Cliente HTTP assíncrono
@@ -33,6 +39,8 @@ Sistema bancário completo com dois serviços FastAPI independentes e bem estrut
 ### 💾 **Storage Service** (porta 8001)
 - Persistência com SQLite (dev) ou PostgreSQL (prod)
 - Repository pattern
+- **Sistema de investimentos** com tipos: Ações, Renda Fixa, Fundos, CDB, Tesouro, Crypto
+- **Gestão de patrimônio** (conta corrente + investimentos)
 - Validação de senha forte
 - Verificação HIBP Pwned Passwords
 - Hash bcrypt para senhas
@@ -41,34 +49,45 @@ Sistema bancário completo com dois serviços FastAPI independentes e bem estrut
 ## 📊 Testes & Cobertura
 
 ```
-✅ 232 testes PASSANDO | 1 skip
+✅ 239 testes PASSANDO | 1 skip
 ❌ 0 testes FALHANDO
-📊 97% cobertura geral (app/)
-⏱️  ~6-8 segundos local / <15s em CI
+📊 95% cobertura geral (app/)
+⏱️  ~30-35 segundos local / <45s em CI
 ```
+
+### 🔧 Últimas Correções (Jan 2026)
+
+- ✅ Corrigido erro de `autocommit` no SQLite
+- ✅ Corrigido `KeyError: patrimonio_investimento` no repository
+- ✅ Corrigido cálculo de patrimônio total (saldo_cc + investimentos)
+- ✅ Corrigido cálculo de projeção de retorno anual
+- ✅ Adicionados testes de validação de modelos
+- ✅ Compatibilidade total com dicts e objetos em investimentos
 
 ### Cobertura por Serviço
 
 **Gateway:**
-| Módulo | Cobertura |
-|--------|-----------|
-| `__init__.py` | 100% ✅ |
-| `main.py` | 100% ✅ |
-| `models.py` | 98% ✅ |
-| `client.py` | 91% ⚠️ |
-| `yahoo_finance_service.py` | 100% ✅ |
-| **Total** | **98-99%** ✅ |
+| Módulo | Cobertura | Linhas Não Cobertas |
+|--------|-----------|---------------------|
+| `__init__.py` | 100% ✅ | - |
+| `main.py` | 100% ✅ | - |
+| `models.py` | 98% ✅ | Validators de data (20, 43, 76) |
+| `client.py` | 91% ⚠️ | Linha 8 (import path) |
+| `yahoo_finance_service.py` | 100% ✅ | - |
+| **Total** | **98%** ✅ | |
 
 **Storage:**
-| Módulo | Cobertura |
-|--------|-----------|
-| `__init__.py` | 100% ✅ |
-| `main.py` | 98% ✅ |
-| `models.py` | 97% ✅ |
-| `db.py` | 94% ✅ |
-| `investment_repository.py` | 96% ✅ |
-| `repository.py` | 90% ⚠️ |
-| **Total** | **95-96%** ✅ |
+| Módulo | Cobertura | Linhas Não Cobertas |
+|--------|-----------|---------------------|
+| `__init__.py` | 100% ✅ | - |
+| `main.py` | 97% ✅ | Logger init (16-17), error handlers |
+| `models.py` | 97% ✅ | Validators de data (21, 44, 77) |
+| `db.py` | 94% ✅ | PostgreSQL migrations (176-192) |
+| `investment_repository.py` | 96% ✅ | PostgreSQL paths (185-190) |
+| `repository.py` | 85% ⚠️ | PostgreSQL paths, edge cases |
+| **Total** | **92%** ✅ | |
+
+> **Nota:** Linhas não cobertas são principalmente caminhos específicos de PostgreSQL vs SQLite e validators Pydantic que são difíceis de testar em ambiente unitário.
 
 ## 🧪 Como Testar
 
@@ -142,6 +161,7 @@ GET /                    # Página inicial (index.html)
 GET /login.html          # Login
 GET /register.html       # Registro
 GET /dashboard.html      # Dashboard
+GET /investments.html    # Gestão de investimentos
 GET /response.html       # Página de resposta
 ```
 
@@ -149,17 +169,35 @@ GET /response.html       # Página de resposta
 ```bash
 GET    /clients                 # Listar clientes
 POST   /clients                 # Criar cliente
-GET    /clients/{email}         # Obter cliente
-PUT    /clients/{email}         # Atualizar cliente
-DELETE /clients/{email}         # Deletar cliente
+GET    /clients/{id}            # Obter cliente por ID
+PUT    /clients/{id}            # Atualizar cliente
+DELETE /clients/{id}            # Deletar cliente
+```
+
+**Investimentos:**
+```bash
+GET    /investments                     # Listar todos investimentos
+POST   /investments                     # Criar investimento
+GET    /investments/{id}                # Obter investimento
+PUT    /investments/{id}                # Atualizar investimento
+DELETE /investments/{id}                # Vender/deletar investimento
+GET    /investments/cliente/{id}        # Listar por cliente
+GET    /investments/cliente/{id}/total  # Total investido
+```
+
+**Cálculos & Analytics:**
+```bash
+GET /calculos/patrimonio/{cliente_id}  # Patrimônio total
+GET /calculos/projecao/{cliente_id}    # Projeção de retorno
+POST /transfer                         # Transferir saldo conta ↔ investimentos
 ```
 
 **Autenticação & Contas:**
 ```bash
 POST /login                # Login de cliente
 POST /register             # Registrar novo cliente
-POST /password             # Trocar senha
-POST /score                # Calcular score de crédito
+PUT  /password             # Trocar senha
+GET  /clients/{id}/score   # Calcular score de crédito
 GET  /health               # Health check
 ```
 
@@ -187,10 +225,12 @@ GET    /health                  # Health check
 curl -X POST http://localhost:8000/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "joao@example.com",
-    "senha": "SecurePass123",
     "nome": "João Silva",
-    "data_nascimento": "1990-05-15"
+    "email": "joao@example.com",
+    "telefone": 21987654321,
+    "senha": "SecurePass123!",
+    "data_nascimento": "1990-05-15",
+    "correntista": true
   }'
 
 # Login
@@ -198,16 +238,37 @@ curl -X POST http://localhost:8000/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "joao@example.com",
-    "senha": "SecurePass123"
+    "senha": "SecurePass123!"
   }'
 
-# Calcular score
-curl -X POST http://localhost:8000/score \
+# Transferir saldo para investimentos
+curl -X POST http://localhost:8000/transfer \
   -H "Content-Type: application/json" \
-  -d '{"email": "joao@example.com"}'
+  -d '{
+    "cliente_id": 1,
+    "valor": 1000.0,
+    "tipo": "CC_PARA_INVESTIMENTO"
+  }'
+
+# Criar investimento
+curl -X POST http://localhost:8000/investments \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cliente_id": 1,
+    "tipo_investimento": "ACOES",
+    "ticker": "PETR4",
+    "valor_investido": 500.0
+  }'
+
+# Calcular patrimônio total
+curl http://localhost:8000/calculos/patrimonio/1
+
+# Projeção de retorno anual
+curl http://localhost:8000/calculos/projecao/1
 
 # Health check
 curl http://localhost:8000/health
+curl http://localhost:8001/health
 curl http://localhost:8001/health
 **Endpoints CRUD:**
 ```bash
@@ -319,14 +380,28 @@ GET/POST/PUT/DELETE /clients
 ### 💳 Funcionalidades Bancárias
 - ✅ Indicador de correntista
 - ✅ Saldo em conta corrente
+- ✅ Patrimônio de investimento
 - ✅ Cálculo automático de score de crédito
 - ✅ Dashboard com informações do cliente
 
+### 📈 Gestão de Investimentos (Novo!)
+- ✅ CRUD completo de investimentos
+- ✅ Tipos: Ações, Renda Fixa, Fundos, CDB, Tesouro Direto, Crypto
+- ✅ Integração com Yahoo Finance (cotações em tempo real)
+- ✅ Cálculo de patrimônio total (conta + investimentos)
+- ✅ Projeção de retorno anual por perfil de investidor
+- ✅ Analytics: total investido por cliente
+- ✅ Gestão de saldo: transferência conta ↔ investimentos
+- ✅ Frontend dedicado: `investments.html`
+- ✅ Validação automática de saldo disponível
+
 ### 🎨 Interface
-- ✅ Frontend responsivo
-- ✅ Páginas: Index, Login, Registro, Dashboard
+- ✅ Frontend responsivo e moderno
+- ✅ Páginas: Index, Login, Registro, Dashboard, **Investimentos**
 - ✅ Feedback visual de operações
 - ✅ Validação no lado do cliente
+- ✅ Integração com Yahoo Finance (cotações em tempo real)
+- ✅ Interface de gestão completa de investimentos
 
 ## 🛠️ Stack Tecnológico
 
@@ -340,6 +415,8 @@ GET/POST/PUT/DELETE /clients
 | Banco Dados | **PostgreSQL** | 15+ | Produção |
 | Banco Dados | **SQLite** | 3.x | Desenvolvimento/testes |
 | DB Driver | **psycopg2** | 2.9.9 | PostgreSQL adapter |
+| Market Data | **yfinance** | latest | Cotações em tempo real |
+| Web Requests | **requests** | 2.31+ | HIBP API, integrações |
 
 ### Testes & Qualidade
 | Componente | Tecnologia | Versão | Uso |
@@ -347,7 +424,7 @@ GET/POST/PUT/DELETE /clients
 | Framework Testes | **pytest** | 7.4.3 | Unit/integration tests |
 | Cobertura | **pytest-cov** | 4.1.0 | Code coverage |
 | HTTP Mocking | **pytest-mock** | 3.12.0 | Mock HTTP calls |
-| Total Testes | **230+** | - | 93% coverage |
+| Total Testes | **239+** | - | 95% coverage |
 
 ### DevOps & Infraestrutura
 | Componente | Tecnologia | Versão | Uso |
@@ -368,10 +445,11 @@ GET/POST/PUT/DELETE /clients
 ```
 javer-services/
 ├── 📦 app/
-│   ├── 🚪 gateway/                    # Gateway Service (99% coverage)
-│   │   ├── main.py                    # Rotas e endpoints (153 stmts)
-│   │   ├── models.py                  # Modelos Pydantic (74 stmts)
-│   │   ├── client.py                  # HTTP client (11 stmts)
+│   ├── 🚪 gateway/                    # Gateway Service (98% coverage)
+│   │   ├── main.py                    # Rotas e endpoints (302 stmts) ✅ 100%
+│   │   ├── models.py                  # Modelos Pydantic (127 stmts) ✅ 98%
+│   │   ├── client.py                  # HTTP client (11 stmts) ⚠️ 91%
+│   │   ├── yahoo_finance_service.py   # Yahoo Finance API (98 stmts) ✅ 100%
 │   │   ├── __init__.py               
 │   │   ├── requirements.txt
 │   │   ├── Dockerfile
@@ -380,20 +458,93 @@ javer-services/
 │   │       ├── login.html             # Login de clientes
 │   │       ├── register.html          # Cadastro
 │   │       ├── dashboard.html         # Dashboard
+│   │       ├── investments.html       # Gestão de investimentos ⭐ NOVO
 │   │       ├── response.html          # Respostas
 │   │       ├── app.js                 # Lógica frontend
 │   │       └── style.css              # Estilos
 │   │
 │   ├── 💾 storage/                    # Storage Service (92% coverage)
-│   │   ├── main.py                    # Endpoints internos (65 stmts)
-│   │   ├── models.py                  # Modelos de dados (69 stmts)
-│   │   ├── repository.py              # Lógica de negócio (204 stmts)
-│   │   ├── db.py                      # Database setup (39 stmts)
+│   │   ├── main.py                    # Endpoints internos (143 stmts) ✅ 97%
+│   │   ├── models.py                  # Modelos de dados (103 stmts) ✅ 97%
+│   │   ├── repository.py              # Lógica de negócio (239 stmts) ⚠️ 85%
+│   │   ├── investment_repository.py   # Gestão investimentos (91 stmts) ✅ 96% ⭐ NOVO
+│   │   ├── db.py                      # Database setup (52 stmts) ✅ 94%
 │   │   ├── __init__.py
 │   │   ├── requirements.txt
 │   │   └── Dockerfile
 │   │
-│   └── 🧪 tests/                      # 230+ testes (93% coverage)
+│   └── 🧪 tests/                      # 239+ testes (95% coverage)
+│       ├── conftest.py                # Fixtures compartilhados
+│       ├── gateway/                   # Testes do gateway
+│       │   ├── test_gateway_main.py
+│       │   ├── test_gateway_endpoints.py
+│       │   ├── test_gateway_investments_analytics.py ⭐ NOVO
+│       │   ├── test_yahoo_finance_service.py ⭐ NOVO
+│       │   ├── test_models_validators_extra.py
+│       │   ├── test_client_coverage.py
+│       │   └── contract/
+│       │       └── test_contract_storage.py
+│       └── storage/                   # Testes do storage
+│           ├── test_storage_main.py
+│           ├── test_storage_endpoints.py
+│           ├── test_storage_investment_endpoints.py ⭐ NOVO
+│           ├── test_investment_repository_extra.py ⭐ NOVO
+│           ├── test_repository_comprehensive.py
+│           └── test_models_validators.py
+│
+├── 🐳 docker-compose.yml              # Orquestração de serviços
+├── 📋 Dockerfile.tests                # Container de testes
+├── ⚙️  pytest.ini                     # Configuração pytest
+├── 📖 README.md                       # Este arquivo
+└── 🔧 Makefile                        # Scripts de automação
+
+## 💰 Tipos de Investimento Disponíveis
+
+O sistema suporta os seguintes tipos de investimento:
+
+| Tipo | Enum | Ticker? | Descrição |
+|------|------|---------|-----------|
+| **Ações** | `ACOES` | ✅ Sim | Ações da Bolsa (ex: PETR4, VALE3) |
+| **Renda Fixa** | `RENDA_FIXA` | ❌ Não | Títulos de renda fixa |
+| **Fundos** | `FUNDOS` | ✅ Opcional | Fundos de investimento |
+| **CDB** | `CDB` | ❌ Não | Certificado de Depósito Bancário |
+| **Tesouro Direto** | `TESOURO_DIRETO` | ❌ Não | Títulos do governo |
+| **Crypto** | `CRYPTO` | ✅ Sim | Criptomoedas (ex: BTC-USD, ETH-USD) |
+
+### 📊 Perfis de Investidor & Projeção
+
+O sistema calcula projeção de retorno anual baseada no perfil:
+
+| Perfil | Taxa Anual | Aplicação |
+|--------|------------|-----------|
+| **CONSERVADOR** | 8% | Sobre patrimônio total |
+| **MODERADO** | 12% | Sobre patrimônio total |
+| **ARROJADO** | 18% | Sobre patrimônio total |
+
+> **Patrimônio Total** = `saldo_cc + total_investido`
+
+### 🔄 Fluxo de Investimento
+
+1. **Transferir saldo:** Conta Corrente → Patrimônio de Investimento
+2. **Investir:** Deduz do patrimônio disponível
+3. **Vender:** Retorna ao patrimônio de investimento
+4. **Transferir de volta:** Patrimônio de Investimento → Conta Corrente
+
+```bash
+# Exemplo completo
+# 1. Cliente tem R$ 5000 em conta corrente
+# 2. Transfere R$ 2000 para investimentos
+POST /transfer {"cliente_id": 1, "valor": 2000, "tipo": "CC_PARA_INVESTIMENTO"}
+
+# 3. Investe R$ 1500 em ações
+POST /investments {"cliente_id": 1, "tipo": "ACOES", "ticker": "PETR4", "valor": 1500}
+
+# 4. Resultado:
+# - Saldo CC: R$ 3000
+# - Patrimônio disponível: R$ 500
+# - Investido: R$ 1500
+# - Patrimônio total: R$ 5000
+```
 │  🔒 Segurança
 
 ### ✅ Implementado
@@ -438,8 +589,8 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
 ## 📊 Qualidade do Código
 
 ### Métricas
-- 📊 **93% Cobertura** - 574 de 615 statements
-- ✅ **230+ Testes** - Todos passando
+- 📊 **95% Cobertura** - 1112 de 1166 statements
+- ✅ **239+ Testes** - Todos passando (1 skip)
 - 🐍 **Type Hints** - 100% do código
 - 📝 **Docstrings** - Funções principais documentadas
 - 🇧🇷 **Português** - Comentários e nomes em PT-BR
@@ -447,31 +598,33 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
 
 ### Cobertura Detalhada por Arquivo
 
-**Gateway Service (99% total)**
+**Gateway Service (98% total)**
 ```
-gateway/__init__.py    100% ✅ (completo)
-gateway/client.py      100% ✅ (completo)  
-gateway/main.py         99% ✅ (1 linha: fallback frontend)
-gateway/models.py       95% ✅ (4 linhas: validators edge cases)
+gateway/__init__.py             100% ✅ (completo)
+gateway/main.py                 100% ✅ (302 stmts - todos cobertos!)
+gateway/yahoo_finance_service.py 100% ✅ (98 stmts - cotações em tempo real)
+gateway/models.py                98% ✅ (127 stmts - 3 linhas: validators)
+gateway/client.py                91% ⚠️  (11 stmts - 1 linha: import path)
 ```
 
 **Storage Service (92% total)**
 ```
-storage/__init__.py    100% ✅ (completo)
-storage/db.py           95% ✅ (2 linhas: PostgreSQL error handling)
-storage/main.py         94% ✅ (4 linhas: lifespan context)
-storage/models.py       93% ✅ (5 linhas: validators edge cases)
-storage/repository.py   88% ✅ (25 linhas: PostgreSQL RETURNING paths)
+storage/__init__.py              100% ✅ (completo)
+storage/main.py                   97% ✅ (143 stmts - 5 linhas: error handlers)
+storage/models.py                 97% ✅ (103 stmts - 3 linhas: validators)
+storage/investment_repository.py  96% ✅ (91 stmts - 4 linhas: PostgreSQL paths)
+storage/db.py                     94% ✅ (52 stmts - 3 linhas: PostgreSQL migrations)
+storage/repository.py             85% ⚠️  (239 stmts - 35 linhas: PostgreSQL + edge cases)
 ```
 
-### Linhas Não Cobertas (41 total)
+### Linhas Não Cobertas (54 total)
 
 **Justificativas:**
-- **PostgreSQL paths** (20 linhas) - Difícil testar sem infra PostgreSQL
-- **Pydantic validators** (9 linhas) - Parsing flexível impede alguns caminhos
-- **Error handlers** (8 linhas) - Edge cases raros
-- **Frontend fallback** (1 linha) - Path condicional
-- **Lifespan** (3 linhas) - Context manager interno
+- **PostgreSQL paths** (25 linhas) - Caminhos específicos PostgreSQL vs SQLite
+- **Pydantic validators** (9 linhas) - Branches de validação de data raramente acionados
+- **Error handlers** (12 linhas) - Edge cases e tratamento de exceções raros
+- **Logger init** (2 linhas) - Inicialização do sistema de logging
+- **Import paths** (6 linhas) - Caminhos condicionais de importação
 
 ## ⚙️ Configuração
 

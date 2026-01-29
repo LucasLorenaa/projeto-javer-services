@@ -50,7 +50,8 @@ def _ensure_sqlite_schema(conn: sqlite3.Connection):
             correntista INTEGER,
             score_credito REAL,
             saldo_cc REAL,
-            senha_hash TEXT
+            senha_hash TEXT,
+            patrimonio_investimento REAL DEFAULT 0.0
         )
         """
     )
@@ -95,13 +96,15 @@ def init_db():
             correntista BOOLEAN,
             score_credito DOUBLE PRECISION,
             saldo_cc DOUBLE PRECISION,
-            senha_hash VARCHAR(255)
+            senha_hash VARCHAR(255),
+            patrimonio_investimento DOUBLE PRECISION DEFAULT 0.0
         )
         """
     )
     cur.execute("ALTER TABLE clients ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE")
     cur.execute("ALTER TABLE clients ADD COLUMN IF NOT EXISTS data_nascimento DATE")
     cur.execute("ALTER TABLE clients ADD COLUMN IF NOT EXISTS senha_hash VARCHAR(255)")
+    cur.execute("ALTER TABLE clients ADD COLUMN IF NOT EXISTS patrimonio_investimento DOUBLE PRECISION DEFAULT 0.0")
     # Remover coluna de idade se existir (migrando para data_nascimento)
     try:
         cur.execute("ALTER TABLE clients DROP COLUMN IF EXISTS idade")

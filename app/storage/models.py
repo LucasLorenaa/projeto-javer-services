@@ -12,6 +12,7 @@ class ClientBase(BaseModel):
     correntista: Optional[bool] = None
     score_credito: Optional[float] = Field(default=None, ge=0)
     saldo_cc: Optional[float] = Field(default=None, ge=0)
+    patrimonio_investimento: Optional[float] = Field(default=0.0, ge=0)
 
     @validator("data_nascimento")
     def validar_idade_minima(cls, v):  # noqa: D417
@@ -66,6 +67,8 @@ class ClientUpdate(BaseModel):
     correntista: Optional[bool] = None
     score_credito: Optional[float] = Field(default=None, ge=0)
     saldo_cc: Optional[float] = Field(default=None, ge=0)
+    patrimonio_investimento: Optional[float] = Field(default=None, ge=0)
+    patrimonio_investimento_delta: Optional[float] = Field(default=None, ge=0)
 
     @validator("data_nascimento")
     def validar_idade_minima(cls, v):  # noqa: D417

@@ -10,7 +10,7 @@ from .models import (
 )
 from . import client as client_module
 
-# Importar YahooFinanceService apenas quando necessário (lazy import)
+# Importar YahooFinanceService apenas quando necessário (importação tardia)
 
 
 def get_dynamic_http_client():
@@ -230,10 +230,18 @@ def score_credito(client_id: int, client: httpx.Client = Depends(get_dynamic_htt
 @app.get("/investments", response_model=list[InvestimentoOut])
 def list_investments(client: httpx.Client = Depends(get_dynamic_http_client)):
     """Lista todos os investimentos."""
+    from fastapi.responses import JSONResponse
     client = client or client_module.get_http_client()
     r = client.get("/investments")
     r.raise_for_status()
-    return r.json()
+    return JSONResponse(
+        content=r.json(),
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 
 @app.get("/investments/{investment_id}", response_model=InvestimentoOut)
@@ -250,10 +258,18 @@ def get_investment(investment_id: int, client: httpx.Client = Depends(get_dynami
 @app.get("/investments/cliente/{cliente_id}", response_model=list[InvestimentoOut])
 def list_investments_by_cliente(cliente_id: int, client: httpx.Client = Depends(get_dynamic_http_client)):
     """Lista investimentos de um cliente."""
+    from fastapi.responses import JSONResponse
     client = client or client_module.get_http_client()
     r = client.get(f"/investments/cliente/{cliente_id}")
     r.raise_for_status()
-    return r.json()
+    return JSONResponse(
+        content=r.json(),
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 
 @app.post("/investments", response_model=InvestimentoOut, status_code=201)
@@ -310,9 +326,11 @@ def projecao_retorno(cliente_id: int, client: httpx.Client = Depends(get_dynamic
     """
     Calcula projeção de retorno anual baseada no perfil do investidor.
     
-    CONSERVADOR → patrimonio_total * 0.08 (8%)
-    MODERADO → patrimonio_total * 0.12 (12%)
-    ARROJADO → patrimonio_total * 0.18 (18%)
+    CONSERVADOR → (saldo_cc + total_investido) * 0.08 (8%)
+    MODERADO → (saldo_cc + total_investido) * 0.12 (12%)
+    ARROJADO → (saldo_cc + total_investido) * 0.18 (18%)
+    
+    Onde total_investido é o valor efetivamente aplicado em investimentos ativos
     """
     client = client or client_module.get_http_client()
     
@@ -330,10 +348,12 @@ def projecao_retorno(cliente_id: int, client: httpx.Client = Depends(get_dynamic
     else:
         total_investido = r_total.json().get("total_investido", 0.0)
     
-    patrimonio_total = total_investido + (cliente_data.get("saldo_cc") or 0)
+    # Usar saldo_cc + total_investido para a projeção
+    saldo_cc = cliente_data.get("saldo_cc", 0) or 0
+    patrimonio_total = saldo_cc + total_investido
     perfil = cliente_data.get("perfil_investidor", "CONSERVADOR")
     
-    # Calcular taxa de retorno baseada no perfil
+    # Calcular taxa de retorno baseada no perfil sobre o patrimônio total
     taxas = {
         "CONSERVADOR": 0.08,
         "MODERADO": 0.12,
@@ -343,19 +363,28 @@ def projecao_retorno(cliente_id: int, client: httpx.Client = Depends(get_dynamic
     taxa_retorno = taxas.get(perfil, 0.08)
     projecao_anual = patrimonio_total * taxa_retorno
     
-    return {
-        "cliente_id": cliente_id,
-        "nome": cliente_data.get("nome"),
-        "perfil_investidor": perfil,
-        "patrimonio_total": patrimonio_total,
-        "projecao_anual": round(projecao_anual, 2),
-        "taxa_retorno": taxa_retorno * 100
-    }
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        content={
+            "cliente_id": cliente_id,
+            "nome": cliente_data.get("nome"),
+            "perfil_investidor": perfil,
+            "patrimonio_total": patrimonio_total,
+            "projecao_anual": round(projecao_anual, 2),
+            "taxa_retorno": taxa_retorno * 100
+        },
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 
 @app.get("/calculos/patrimonio/{cliente_id}", response_model=PatrimonioCliente)
 def calcular_patrimonio(cliente_id: int, client: httpx.Client = Depends(get_dynamic_http_client)):
     """Calcula o patrimônio total de um cliente."""
+    from fastapi import Response
     client = client or client_module.get_http_client()
     
     # Obter dados do cliente
@@ -373,15 +402,26 @@ def calcular_patrimonio(cliente_id: int, client: httpx.Client = Depends(get_dyna
         total_investimentos = r_total.json().get("total_investido", 0.0)
     
     saldo_conta = cliente_data.get("saldo_cc") or 0.0
+    patrimonio_investimento = cliente_data.get("patrimonio_investimento") or 0.0
+    # Patrimônio total = saldo em conta + total investido
     patrimonio_total = saldo_conta + total_investimentos
     
-    return {
-        "cliente_id": cliente_id,
-        "nome": cliente_data.get("nome"),
-        "saldo_conta": saldo_conta,
-        "total_investimentos": total_investimentos,
-        "patrimonio_total": patrimonio_total
-    }
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        content={
+            "cliente_id": cliente_id,
+            "nome": cliente_data.get("nome"),
+            "saldo_conta": saldo_conta,
+            "patrimonio_investimento": patrimonio_investimento,
+            "total_investimentos": total_investimentos,
+            "patrimonio_total": patrimonio_total
+        },
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 
 @app.get("/analises/carteira/{cliente_id}")
@@ -463,7 +503,7 @@ def analise_mercado(ticker: str, client: httpx.Client = Depends(get_dynamic_http
                 MARKET_CACHE[ticker] = {"info": info, "ts": now}
         
         if not info:
-            # Fallback amigável quando serviço externo falha ou sem internet
+            # Retorno alternativo amigável quando serviço externo falha ou sem internet
             return {
                 "ticker": ticker,
                 "preco_atual": 0.0,

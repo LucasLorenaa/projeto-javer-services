@@ -61,7 +61,7 @@ class YahooFinanceService:
         - Por último, usa Ticker.info quando disponível
         """
         try:
-            # 1) Tentar via download (melhor para índices e criptos)
+            # 1) Tentar via download (melhor para índices e criptomoedas)
             try:
                 dl = yf.download(ticker, period="2d", progress=False)
                 if not dl.empty:
@@ -86,7 +86,7 @@ class YahooFinanceService:
 
             stock = yf.Ticker(ticker)
 
-            # 2) Tentar histórico com Ticker.history
+            # 2) Tentar buscar histórico com Ticker.history
             hist = stock.history(period="2d")
             if not hist.empty:
                 preco_atual = float(hist['Close'].iloc[-1])

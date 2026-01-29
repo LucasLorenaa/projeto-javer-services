@@ -80,7 +80,7 @@ def _execute_query(conn, cur, query_sqlite: str, query_postgres: str, params: tu
         # Psycopg2: usa diretamente a sintaxe do PostgreSQL
         return cur.execute(query_postgres, params)  # pragma: no cover - caminho PostgreSQL
 
-    # Caminho SQLite: tenta '?' e faz fallback para '%s' se necessário
+    # Caminho SQLite: tenta '?' e faz retorno alternativo para '%s' se necessário
     try:
         return cur.execute(query_sqlite, params)
     except Exception as e:
@@ -92,6 +92,7 @@ def _execute_query(conn, cur, query_sqlite: str, query_postgres: str, params: tu
 def _row_to_client(row) -> Dict[str, Any]:
     saldo = float(row[7]) if row[7] is not None else None
     score = float(row[6]) if row[6] is not None else _compute_score(saldo)
+    patrimonio_inv = float(row[8]) if len(row) > 8 and row[8] is not None else 0.0
     return {
         "id": row[0],
         "nome": row[1],
@@ -101,6 +102,7 @@ def _row_to_client(row) -> Dict[str, Any]:
         "correntista": bool(row[5]),
         "score_credito": score,
         "saldo_cc": saldo,
+        "patrimonio_investimento": patrimonio_inv,
     }
 
 
@@ -120,8 +122,8 @@ def list_clients() -> List[Dict[str, Any]]:
         _execute_query(
             conn,
             cur,
-            "SELECT id, nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc FROM clients",
-            "SELECT id, nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc FROM clients",
+            "SELECT id, nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, patrimonio_investimento FROM clients",
+            "SELECT id, nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, patrimonio_investimento FROM clients",
             ()
         )
         rows = cur.fetchall()
@@ -139,8 +141,8 @@ def get_client(client_id: int) -> Optional[Dict[str, Any]]:
         _execute_query(
             conn,
             cur,
-            "SELECT id, nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc FROM clients WHERE id = ?",
-            "SELECT id, nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc FROM clients WHERE id = %s",
+            "SELECT id, nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, patrimonio_investimento FROM clients WHERE id = ?",
+            "SELECT id, nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, patrimonio_investimento FROM clients WHERE id = %s",
             (client_id,)
         )
         row = cur.fetchone()
@@ -189,6 +191,7 @@ def create_client(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             data.get("score_credito"),
             data.get("saldo_cc"),
             senha_hash,
+            data.get("patrimonio_investimento", 0.0),
         )
         params_sqlite = params_pg
         
@@ -197,8 +200,8 @@ def create_client(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         # Tenta PostgreSQL com RETURNING
         try:
             cur.execute(  # pragma: no cover - caminho PostgreSQL
-                """INSERT INTO clients (nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, senha_hash) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                """INSERT INTO clients (nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, senha_hash, patrimonio_investimento) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
                 params_pg
             )
             result = cur.fetchone()
@@ -207,8 +210,8 @@ def create_client(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             # Tenta SQLite com RETURNING (versão 3.35+)
             try:
                 cur.execute(
-                    """INSERT INTO clients (nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, senha_hash) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id""",
+                    """INSERT INTO clients (nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, senha_hash, patrimonio_investimento) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id""",
                     params_sqlite
                 )
                 result = cur.fetchone()
@@ -216,8 +219,8 @@ def create_client(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             except Exception as e2:
                 # Fallback: SQLite sem RETURNING
                 cur.execute(
-                    """INSERT INTO clients (nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, senha_hash) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    """INSERT INTO clients (nome, telefone, email, data_nascimento, correntista, score_credito, saldo_cc, senha_hash, patrimonio_investimento) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     params_sqlite
                 )
                 cur.execute("SELECT MAX(id) FROM clients")
@@ -235,9 +238,17 @@ def create_client(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 
 def update_client(client_id: int, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    import logging
+    logger = logging.getLogger("storage")
+    
     current = get_client(client_id)
     if not current:
+        logger.error(f"update_client: Cliente {client_id} não encontrado")
         return None
+    
+    # Garantir que patrimonio_investimento existe
+    if "patrimonio_investimento" not in current:
+        current["patrimonio_investimento"] = 0.0
     
     # Hash da senha se fornecida
     if "senha" in data:
@@ -245,8 +256,19 @@ def update_client(client_id: int, data: Dict[str, Any]) -> Optional[Dict[str, An
         if _is_password_pwned(data["senha"]):
             raise ValueError("Senha comprometida em vazamentos. Escolha outra.")
         data["senha_hash"] = _hash_password(data.pop("senha"))
+
+    # Aplicar delta SOMENTE se não vier patrimonio_investimento direto
+    if data.get("patrimonio_investimento_delta") is not None and "patrimonio_investimento" not in data:
+        delta = data.pop("patrimonio_investimento_delta")
+        base = current.get("patrimonio_investimento") or 0.0
+        data["patrimonio_investimento"] = base + delta
+    elif "patrimonio_investimento_delta" in data:
+        data.pop("patrimonio_investimento_delta")
     
     merged = {**current, **{k: v for k, v in data.items() if v is not None}}
+    logger.info(f"update_client: {client_id} merged data: saldo_cc={merged.get('saldo_cc')}, patrimonio_investimento={merged.get('patrimonio_investimento')}")
+    logger.info(f"update_client: {client_id} current patrimonio: {current.get('patrimonio_investimento')}, data patrimonio: {data.get('patrimonio_investimento')}")
+    
     conn = get_connection()
     should_close = _should_close_connection(conn)
     try:
@@ -271,25 +293,57 @@ def update_client(client_id: int, data: Dict[str, Any]) -> Optional[Dict[str, An
             merged["correntista"],
             merged["score_credito"],
             merged["saldo_cc"],
+            merged["patrimonio_investimento"],
             senha_hash_final,
             client_id,
         )
         
+        print(f"DEBUG update_client: params = {params}")
+        print(f"DEBUG update_client: patrimonio_investimento em params[7] = {params[7]}")
+        print(f"DEBUG merged patrimonio_investimento = {merged['patrimonio_investimento']}")
+        print(f"DEBUG current patrimonio_investimento = {current.get('patrimonio_investimento')}")
+        print(f"DEBUG data patrimonio_investimento = {data.get('patrimonio_investimento')}")
+        
         try:
-              cur.execute(  # pragma: no cover - caminho PostgreSQL
-                """UPDATE clients SET nome=?, telefone=?, email=?, data_nascimento=?, correntista=?, score_credito=?, saldo_cc=?, senha_hash=? 
+              print(f"DEBUG: Tentando UPDATE com SQLite placeholders (?)")
+              cur.execute(  # pragma: no cover - caminho SQLite
+                """UPDATE clients SET nome=?, telefone=?, email=?, data_nascimento=?, correntista=?, score_credito=?, saldo_cc=?, patrimonio_investimento=?, senha_hash=? 
                    WHERE id=?""",
                 params
             )
-        except Exception:
-              cur.execute(  # pragma: no cover - caminho PostgreSQL
-                """UPDATE clients SET nome=%s, telefone=%s, email=%s, data_nascimento=%s, correntista=%s, score_credito=%s, saldo_cc=%s, senha_hash=%s 
-                   WHERE id=%s""",
-                params
-            )
+              print(f"DEBUG: UPDATE com ? funcionou! Rows affected: {cur.rowcount}")
+        except Exception as e1:
+              print(f"DEBUG: SQLite falhou: {e1}")
+              try:
+                  print(f"DEBUG: Tentando UPDATE com PostgreSQL placeholders (%s)")
+                  cur.execute(  # pragma: no cover - caminho PostgreSQL
+                    """UPDATE clients SET nome=%s, telefone=%s, email=%s, data_nascimento=%s, correntista=%s, score_credito=%s, saldo_cc=%s, patrimonio_investimento=%s, senha_hash=%s 
+                       WHERE id=%s""",
+                    params
+                )
+                  print(f"DEBUG: UPDATE com %s funcionou! Rows affected: {cur.rowcount}")
+                  if cur.rowcount == 0:
+                      print(f"ERRO: UPDATE não afetou nenhuma linha! client_id={client_id}")
+              except Exception as e2:
+                  print(f"DEBUG: PostgreSQL falhou: {e2}")
+                  logger.error(f"update_client: Falha ao executar UPDATE. SQLite: {e1}, PostgreSQL: {e2}")
+                  raise e2
         
-        conn.commit()
-        return get_client(client_id)
+        # SQLite não tem autocommit, PostgreSQL sim
+        try:
+            if not conn.autocommit:
+                conn.commit()
+                logger.info(f"update_client: {client_id} commit manual realizado")
+        except AttributeError:
+            # SQLite: sempre fazer commit
+            conn.commit()
+            logger.info(f"update_client: {client_id} commit manual realizado (SQLite)")
+        
+        result = get_client(client_id)
+        if result:
+            print(f"DEBUG: Pós-UPDATE verificação - patrimonio_investimento={result.get('patrimonio_investimento')}")
+            logger.info(f"update_client: {client_id} verificação pós-update saldo_cc={result.get('saldo_cc')}, patrimonio={result.get('patrimonio_investimento')}")
+        return result
     finally:
         if should_close:
             conn.close()

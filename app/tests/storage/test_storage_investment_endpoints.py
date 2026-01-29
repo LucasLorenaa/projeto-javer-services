@@ -45,7 +45,7 @@ def test_api_create_investment_client_missing(mock_get_client):
     assert resp.status_code == 404
 
 
-@patch("storage.main.get_client", return_value={"id": 1})
+@patch("storage.main.get_client", return_value={"id": 1, "patrimonio_investimento": 500.0})
 @patch("storage.main.InvestmentRepository.create", return_value=make_inv())
 def test_api_create_investment_success(mock_create, mock_get_client):
     payload = {

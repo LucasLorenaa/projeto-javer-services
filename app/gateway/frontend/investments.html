@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- Version: 2026-01-28-patrimonio-v2 -->
     <title>Investimentos - Javer Services</title>
     <style>
         * {
@@ -603,13 +607,25 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="ticker">Ticker (opcional)</label>
-                            <input type="text" id="ticker" placeholder="Ex: PETR4.SA, AAPL, BTC-USD">
+                            <label for="ticker">Ticker </label>
+                            <input type="text" id="ticker" placeholder="Ex: PETR4.SA, AAPL, BTC-USD" onblur="buscarCotacaoParaCompra()">
                         </div>
 
                         <div class="form-group">
-                            <label for="valorInvestido">Valor Investido (R$)</label>
-                            <input type="number" id="valorInvestido" step="0.01" min="0" required placeholder="1000.00">
+                            <label for="quantidade">Quantidade</label>
+                            <input type="number" id="quantidade" step="0.00000001" min="0" required placeholder="10" oninput="calcularValorTotal()">
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Cotação Atual</label>
+                            <div style="padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #ddd;">
+                                <span id="cotacaoAtual" style="font-weight: 600; color: #667eea;">Informe o ticker para buscar cotação</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="valorTotal">Valor Total (R$)</label>
+                            <input type="number" id="valorTotal" step="0.01" min="0" readonly style="background: #f8f9fa; font-weight: 600; font-size: 18px; color: #667eea;" placeholder="0.00">
                         </div>
 
                         <div class="form-group">
@@ -626,10 +642,25 @@
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button type="submit" class="btn btn-primary">💾 Salvar Investimento</button>
+                        <button type="button" class="btn btn-primary" onclick="abrirConfirmacaoCompra(event)">💾 Salvar Investimento</button>
                         <button type="button" class="btn btn-secondary" onclick="cancelCreateForm()">❌ Cancelar</button>
                     </div>
                 </form>
+            </div>
+
+            <!-- Modal de Confirmação de Compra -->
+            <div id="confirmacaoCompraModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+                <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 500px; text-align: center;">
+                    <h2 style="color: #333; margin-bottom: 20px;">⚠️ Confirmar Compra</h2>
+                    <div id="confirmacaoDetalhes" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: left;">
+                        <!-- Detalhes serão preenchidos via JavaScript -->
+                    </div>
+                    <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Tem certeza que deseja realizar esta compra?</p>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button class="btn btn-primary" onclick="confirmarCompraInvestimento()" style="flex: 1;">✅ Sim, Confirmar Compra</button>
+                        <button class="btn btn-secondary" onclick="cancelarConfirmacaoCompra()" style="flex: 1;">❌ Cancelar</button>
+                    </div>
+                </div>
             </div>
 
 
@@ -641,8 +672,35 @@
         let investments = [];
         let autoRefreshInterval = null;
         let watchlistTickers = [];
+        let pendingInvestimento = null;
 
-        function init() {
+        async function refreshCurrentUser() {
+            try {
+                const resp = await fetch(`/clients/${currentUser.id}`, {
+                    cache: 'no-store'
+                });
+                if (!resp.ok) {
+                    throw new Error(`Erro ${resp.status}`);
+                }
+                currentUser = await resp.json();
+                localStorage.setItem('cliente', JSON.stringify(currentUser));
+            } catch (err) {
+                console.warn('Não foi possível atualizar o cliente', err);
+            }
+        }
+
+        async function init() {
+            // Verificar versão da aplicação para forçar reload de dados em cache
+            const APP_VERSION = "1.1.0";
+            const storedVersion = localStorage.getItem('appVersion');
+            
+            if (storedVersion !== APP_VERSION) {
+                console.log('Versão da aplicação mudou, limpando cache de dados...');
+                // Limpar APENAS cache de dados, não o login
+                localStorage.removeItem('watchlistTickers');
+                localStorage.setItem('appVersion', APP_VERSION);
+            }
+            
             const userData = localStorage.getItem('cliente');
             
             if (!userData) {
@@ -651,6 +709,23 @@
             }
 
             currentUser = JSON.parse(userData);
+            
+            // Sempre fazer um refresh dos dados do servidor ao inicializar
+            try {
+                console.log('Carregando dados do servidor...');
+                const resp = await fetch(`/clients/${currentUser.id}?t=${Date.now()}`, {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
+                if (resp.ok) {
+                    currentUser = await resp.json();
+                    localStorage.setItem('cliente', JSON.stringify(currentUser));
+                    console.log('Dados do servidor carregados:', currentUser);
+                }
+            } catch (err) {
+                console.warn('Erro ao recarregar dados do servidor:', err);
+            }
+            await refreshCurrentUser();
             loadAllData();
             initWatchlist();
             startAutoRefresh();
@@ -667,15 +742,17 @@
 
         async function loadPatrimonio() {
             try {
-                const response = await fetch(`/calculos/patrimonio/${currentUser.id}`);
+                const response = await fetch(`/calculos/patrimonio/${currentUser.id}?t=${Date.now()}`);
                 if (response.ok) {
                     const data = await response.json();
+                    // Exibir patrimonio_investimento (disponível para investir)
                     document.getElementById('patrimonioValue').textContent = 
-                        `R$ ${data.patrimonio_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
+                        `R$ ${data.patrimonio_investimento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
                     document.getElementById('saldoContaValue').textContent = 
                         `R$ ${data.saldo_conta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
                     document.getElementById('totalInvestidoValue').textContent = 
                         `R$ ${data.total_investimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
+                    // Patrimônio Base continua sendo o total
                     document.getElementById('patrimonioBaseValue').textContent = 
                         `R$ ${data.patrimonio_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
                 }
@@ -686,9 +763,10 @@
 
         async function loadProjecao() {
             try {
-                const response = await fetch(`/calculos/projecao/${currentUser.id}`);
+                const response = await fetch(`/calculos/projecao/${currentUser.id}?t=${Date.now()}`);
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Dados de projeção:', data);
                     document.getElementById('projecaoValue').textContent = 
                         `R$ ${data.projecao_anual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
                     document.getElementById('taxaProjecaoValue').textContent = `${data.taxa_retorno}%`;
@@ -761,7 +839,7 @@
                     <td>${status}</td>
                     <td>${dataApp}</td>
                     <td class="actions">
-                        <button class="btn-small btn-delete" onclick="deleteInvestimento(${inv.id})">🗑️ Deletar</button>
+                        <button class="btn-small btn-delete" onclick="deleteInvestimento(${inv.id})">� Vender</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -777,19 +855,30 @@
             document.getElementById('createFormContainer').style.display = 'none';
             document.getElementById('tipoInvestimento').value = '';
             document.getElementById('ticker').value = '';
-            document.getElementById('valorInvestido').value = '';
+            document.getElementById('quantidade').value = '';
+            document.getElementById('valorTotal').value = '';
+            document.getElementById('cotacaoAtual').innerHTML = 'Informe o ticker para buscar cotação';
+            document.getElementById('cotacaoAtual').style.color = '#666';
             document.getElementById('rentabilidade').value = '';
             document.getElementById('ativo').checked = true;
+            window.currentCotacao = null;
+            window.currentTickerData = null;
         }
 
         async function saveInvestimento(event) {
             event.preventDefault();
 
+            const valorTotal = parseFloat(document.getElementById('valorTotal').value);
+            if (!valorTotal || valorTotal <= 0) {
+                showMessage('❌ Informe a quantidade e verifique se a cotação foi carregada', 'error');
+                return;
+            }
+
             const investimento = {
                 cliente_id: currentUser.id,
                 tipo_investimento: document.getElementById('tipoInvestimento').value,
                 ticker: document.getElementById('ticker').value || null,
-                valor_investido: parseFloat(document.getElementById('valorInvestido').value),
+                valor_investido: valorTotal,
                 rentabilidade: parseFloat(document.getElementById('rentabilidade').value) || 0,
                 ativo: document.getElementById('ativo').checked
             };
@@ -816,21 +905,175 @@
             }
         }
 
+        async function abrirConfirmacaoCompra(event) {
+            event.preventDefault();
+
+            const valorTotal = parseFloat(document.getElementById('valorTotal').value);
+            if (!valorTotal || valorTotal <= 0) {
+                showMessage('❌ Informe a quantidade e verifique se a cotação foi carregada', 'error');
+                return;
+            }
+
+            // Preparar dados do investimento
+            const tipo = document.getElementById('tipoInvestimento').value;
+            const ticker = document.getElementById('ticker').value || '-';
+            const quantidade = document.getElementById('quantidade').value;
+            const cotacao = document.getElementById('cotacaoAtual').textContent;
+
+            // Armazenar investimento pendente
+            pendingInvestimento = {
+                cliente_id: currentUser.id,
+                tipo_investimento: tipo,
+                ticker: ticker !== '-' ? ticker : null,
+                valor_investido: valorTotal,
+                rentabilidade: parseFloat(document.getElementById('rentabilidade').value) || 0,
+                ativo: document.getElementById('ativo').checked
+            };
+
+            const buildDetalhesHtml = (patrimonioAtual) => `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <strong style="color: #666; font-size: 12px; text-transform: uppercase;">Tipo</strong>
+                        <div style="font-size: 16px; color: #333; margin-top: 5px;">${tipo}</div>
+                    </div>
+                    <div>
+                        <strong style="color: #666; font-size: 12px; text-transform: uppercase;">Ticker</strong>
+                        <div style="font-size: 16px; color: #333; margin-top: 5px;">${ticker}</div>
+                    </div>
+                    <div>
+                        <strong style="color: #666; font-size: 12px; text-transform: uppercase;">Quantidade</strong>
+                        <div style="font-size: 16px; color: #333; margin-top: 5px;">${quantidade}</div>
+                    </div>
+                    <div>
+                        <strong style="color: #666; font-size: 12px; text-transform: uppercase;">Cotação</strong>
+                        <div style="font-size: 16px; color: #333; margin-top: 5px;">${cotacao}</div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <strong style="color: #666; font-size: 12px; text-transform: uppercase;">Valor Total</strong>
+                        <div style="font-size: 24px; font-weight: 700; color: #667eea; margin-top: 5px;">
+                            R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 14px; color: #999;">
+                    Seu patrimônio atual: <strong style="color: #333;">R$ ${patrimonioAtual.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
+                    <br>
+                    <span style="font-size: 12px;">Patrimônio após compra: <strong style="color: ${patrimonioAtual - valorTotal >= 0 ? '#27ae60' : '#e74c3c'};">R$ ${(patrimonioAtual - valorTotal).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
+                </div>
+            `;
+
+            // SEMPRE buscar patrimônio fresco do servidor antes de abrir a modal
+            let patrimonioAtual = 0;
+            try {
+                const resp = await fetch(`/clients/${currentUser.id}`, {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
+                if (!resp.ok) {
+                    throw new Error(`Erro ${resp.status}`);
+                }
+                const clienteAtualizado = await resp.json();
+                patrimonioAtual = clienteAtualizado.patrimonio_investimento || 0;
+                // manter currentUser alinhado
+                currentUser = clienteAtualizado;
+                localStorage.setItem('cliente', JSON.stringify(currentUser));
+                console.log('Patrimônio atual buscado do servidor:', patrimonioAtual);
+            } catch (err) {
+                console.error('Erro ao buscar patrimônio para confirmação', err);
+                // Fallback para o currentUser em memória
+                patrimonioAtual = currentUser.patrimonio_investimento || 0;
+            }
+
+            document.getElementById('confirmacaoDetalhes').innerHTML = buildDetalhesHtml(patrimonioAtual);
+            document.getElementById('confirmacaoCompraModal').style.display = 'flex';
+        }
+
+        function cancelarConfirmacaoCompra() {
+            document.getElementById('confirmacaoCompraModal').style.display = 'none';
+            pendingInvestimento = null;
+        }
+
+        async function confirmarCompraInvestimento() {
+            if (!pendingInvestimento) {
+                showMessage('❌ Erro ao processar a compra', 'error');
+                return;
+            }
+
+            document.getElementById('confirmacaoCompraModal').style.display = 'none';
+
+            try {
+                console.log('Enviando POST /investments com:', JSON.stringify(pendingInvestimento));
+                const response = await fetch('/investments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(pendingInvestimento)
+                });
+
+                console.log('Resposta do servidor:', response.status, response.statusText);
+
+                if (response.ok) {
+                    showMessage('✅ Investimento criado com sucesso!', 'success');
+                    cancelCreateForm();
+                    
+                    // Aguardar um pouco para garantir que o backend processou a dedução
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Limpar cache do localStorage para forçar reload
+                    localStorage.removeItem('cliente');
+                    
+                    // Atualizar currentUser com dados do servidor (garantir que é OK)
+                    try {
+                        const resp = await fetch(`/clients/${currentUser.id}?t=${Date.now()}`, {
+                            cache: 'no-store',
+                            headers: { 'Cache-Control': 'no-cache' }
+                        });
+                        if (!resp.ok) {
+                            throw new Error(`Erro ${resp.status}`);
+                        }
+                        const clienteAtualizado = await resp.json();
+                        currentUser = clienteAtualizado;
+                        localStorage.setItem('cliente', JSON.stringify(currentUser));
+                        console.log('Cliente atualizado após compra:', currentUser);
+                    } catch (err) {
+                        console.warn('Erro ao atualizar cliente após compra:', err);
+                    }
+                    
+                    await loadAllData();
+                    pendingInvestimento = null;
+                } else {
+                    const error = await response.json();
+                    console.error('Erro do servidor:', error);
+                    showMessage(`❌ Erro: ${error.detail || JSON.stringify(error) || 'Falha ao criar investimento'}`, 'error');
+                }
+            } catch (err) {
+                showMessage(`❌ Erro: ${err.message}`, 'error');
+            }
+        }
+
         async function deleteInvestimento(invId) {
-            if (!confirm('Tem certeza que deseja deletar este investimento?')) {
+            if (!confirm('Tem certeza que deseja vender este investimento?\n\nO valor investido será retornado para o seu patrimônio disponível.')) {
                 return;
             }
 
             try {
-                const response = await fetch(`/investments/${invId}`, {
-                    method: 'DELETE'
+                const response = await fetch(`/investments/${invId}?t=${Date.now()}`, {
+                    method: 'DELETE',
+                    headers: { 'Cache-Control': 'no-cache' }
                 });
 
                 if (response.ok || response.status === 204) {
-                    showMessage('✅ Investimento deletado com sucesso!', 'success');
+                    // Limpar cache do localStorage para forçar reload
+                    localStorage.removeItem('cliente');
+                    
+                    showMessage('✅ Investimento vendido com sucesso! O valor foi retornado ao seu patrimônio.', 'success');
+                    
+                    // Aguardar um pouco para o backend processar
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     await loadAllData();
                 } else {
-                    showMessage('❌ Erro ao deletar investimento', 'error');
+                    showMessage('❌ Erro ao vender investimento', 'error');
                 }
             } catch (err) {
                 showMessage(`❌ Erro: ${err.message}`, 'error');
@@ -1069,6 +1312,97 @@
                 const now = new Date();
                 document.getElementById('bolsaLastUpdate').textContent = now.toLocaleString('pt-BR');
             } catch {}
+        }
+
+        // ===================== Funções para compra por quantidade =====================
+        window.currentCotacao = null;
+        window.currentTickerData = null;
+
+        async function buscarCotacaoParaCompra() {
+            let ticker = document.getElementById('ticker').value.trim().toUpperCase();
+            const cotacaoEl = document.getElementById('cotacaoAtual');
+            
+            if (!ticker) {
+                cotacaoEl.innerHTML = 'Informe o ticker para buscar cotação';
+                cotacaoEl.style.color = '#666';
+                window.currentCotacao = null;
+                window.currentTickerData = null;
+                calcularValorTotal();
+                return;
+            }
+
+            // Normalizar tickers comuns
+            const tickerMap = {
+                'BITCOIN': 'BTC-USD',
+                'BTC': 'BTC-USD',
+                'ETHEREUM': 'ETH-USD',
+                'ETH': 'ETH-USD',
+                'PETR4': 'PETR4.SA',
+                'VALE3': 'VALE3.SA',
+                'ITUB4': 'ITUB4.SA',
+                'BBDC4': 'BBDC4.SA',
+                'APPLE': 'AAPL',
+                'MICROSOFT': 'MSFT',
+                'GOOGLE': 'GOOGL',
+                'TESLA': 'TSLA'
+            };
+            
+            if (tickerMap[ticker]) {
+                ticker = tickerMap[ticker];
+                document.getElementById('ticker').value = ticker;
+            }
+
+            cotacaoEl.innerHTML = '🔄 Buscando cotação...';
+            cotacaoEl.style.color = '#667eea';
+
+            try {
+                const response = await fetch(`/analises/mercado/${ticker}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    window.currentCotacao = data.preco_atual;
+                    window.currentTickerData = data;
+                    
+                    const variacaoClass = data.variacao_dia >= 0 ? 'positivo' : 'negativo';
+                    const variacaoSimbolo = data.variacao_dia >= 0 ? '▲' : '▼';
+                    
+                    cotacaoEl.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 16px; color: #27ae60;">R$ ${data.preco_atual.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
+                                <span style="margin-left: 8px; font-size: 12px; color: #999;">por unidade</span>
+                            </div>
+                            <div style="font-size: 12px; padding: 4px 8px; border-radius: 4px; background: ${variacaoClass === 'positivo' ? '#27ae60' : '#e74c3c'}; color: white;">
+                                ${variacaoSimbolo} ${data.variacao_percentual ? data.variacao_percentual.toFixed(2) : '0.00'}%
+                            </div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 11px; color: #999;">
+                            <strong>${ticker}</strong> • Volume: ${data.volume ? data.volume.toLocaleString('pt-BR') : 'N/A'}
+                        </div>
+                    `;
+                    cotacaoEl.style.color = '#333';
+                    calcularValorTotal();
+                } else {
+                    cotacaoEl.innerHTML = `❌ Ticker "${ticker}" não encontrado. Tente: BTC-USD, PETR4.SA, AAPL`;
+                    cotacaoEl.style.color = '#e74c3c';
+                    window.currentCotacao = null;
+                    window.currentTickerData = null;
+                    calcularValorTotal();
+                }
+            } catch (err) {
+                cotacaoEl.innerHTML = '❌ Erro ao buscar cotação. Verifique sua conexão.';
+                cotacaoEl.style.color = '#e74c3c';
+                window.currentCotacao = null;
+                window.currentTickerData = null;
+                calcularValorTotal();
+            }
+        }
+
+        function calcularValorTotal() {
+            const quantidade = parseFloat(document.getElementById('quantidade').value) || 0;
+            const cotacao = window.currentCotacao || 0;
+            const valorTotal = quantidade * cotacao;
+            
+            document.getElementById('valorTotal').value = valorTotal.toFixed(2);
         }
 
         window.addEventListener('load', init);
