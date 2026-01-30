@@ -326,9 +326,9 @@ def projecao_retorno(cliente_id: int, client: httpx.Client = Depends(get_dynamic
     """
     Calcula projeção de retorno anual baseada no perfil do investidor.
     
-    CONSERVADOR → (saldo_cc + total_investido) * 0.08 (8%)
-    MODERADO → (saldo_cc + total_investido) * 0.12 (12%)
-    ARROJADO → (saldo_cc + total_investido) * 0.18 (18%)
+    CONSERVADOR → (total_investido) * 0.08 (8%)
+    MODERADO → (total_investido) * 0.12 (12%)
+    ARROJADO → (total_investido) * 0.18 (18%)
     
     Onde total_investido é o valor efetivamente aplicado em investimentos ativos
     """
@@ -348,9 +348,8 @@ def projecao_retorno(cliente_id: int, client: httpx.Client = Depends(get_dynamic
     else:
         total_investido = r_total.json().get("total_investido", 0.0)
     
-    # Usar saldo_cc + total_investido para a projeção
-    saldo_cc = cliente_data.get("saldo_cc", 0) or 0
-    patrimonio_total = saldo_cc + total_investido
+    # Usar total investido como base da projeção
+    patrimonio_total = total_investido
     perfil = cliente_data.get("perfil_investidor", "CONSERVADOR")
     
     # Calcular taxa de retorno baseada no perfil sobre o patrimônio total
@@ -403,8 +402,8 @@ def calcular_patrimonio(cliente_id: int, client: httpx.Client = Depends(get_dyna
     
     saldo_conta = cliente_data.get("saldo_cc") or 0.0
     patrimonio_investimento = cliente_data.get("patrimonio_investimento") or 0.0
-    # Patrimônio total = saldo em conta + total investido
-    patrimonio_total = saldo_conta + total_investimentos
+    # Patrimônio total = saldo em conta + patrimônio disponível + total investido
+    patrimonio_total = saldo_conta + patrimonio_investimento + total_investimentos
     
     from fastapi.responses import JSONResponse
     return JSONResponse(

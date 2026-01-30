@@ -197,7 +197,7 @@ def test_projecao_retorno_com_total(mock_get_client):
     data = resp.json()
 
     assert resp.status_code == 200
-    assert data["projecao_anual"] == pytest.approx((1000.0 + 500.0) * 0.12, rel=1e-3)
+    assert data["projecao_anual"] == pytest.approx(500.0 * 0.12, rel=1e-3)
     assert data["taxa_retorno"] == 12.0
 
 

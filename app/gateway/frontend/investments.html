@@ -752,9 +752,10 @@
                         `R$ ${data.saldo_conta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
                     document.getElementById('totalInvestidoValue').textContent = 
                         `R$ ${data.total_investimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
-                    // Patrimônio Base continua sendo o total
+                    // Patrimônio Base reflete o patrimônio atual (disponível para investir)
+                    const patrimonioBase = (data.patrimonio_investimento ?? data.patrimonio_total ?? 0);
                     document.getElementById('patrimonioBaseValue').textContent = 
-                        `R$ ${data.patrimonio_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
+                        `R$ ${patrimonioBase.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`;
                 }
             } catch (err) {
                 console.error('Erro ao carregar patrimônio:', err);
